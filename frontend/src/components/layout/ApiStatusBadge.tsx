@@ -145,7 +145,7 @@ export function ApiStatusBadge() {
   return (
     <div className="flex items-center gap-2">
       <div
-        className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/80 text-zinc-700 dark:text-zinc-300"
+        className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-white border border-slate-200 text-slate-700 shadow-2xs"
         title={tooltip}
       >
         <span className={`w-2 h-2 rounded-full ${dotColor}`} />
@@ -157,11 +157,11 @@ export function ApiStatusBadge() {
           checkStatus();
         }}
         disabled={status.isChecking}
-        className="p-1 rounded-md text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
+        className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors disabled:opacity-50 cursor-pointer"
         title="Refresh service status"
         aria-label="Refresh status"
       >
-        <RefreshCw className={`w-3.5 h-3.5 ${status.isChecking ? "animate-spin text-emerald-600" : ""}`} />
+        <RefreshCw className={`w-3.5 h-3.5 ${status.isChecking ? "animate-spin text-indigo-600" : ""}`} />
       </button>
     </div>
   );
