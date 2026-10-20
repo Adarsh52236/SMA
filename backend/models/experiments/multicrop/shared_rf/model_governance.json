@@ -1,0 +1,50 @@
+{
+  "model_name": "Shared_MultiCrop_Random_Forest",
+  "model_version": "1.0.0",
+  "target_column": "yield_t_ha",
+  "target_units": "tonnes per hectare (t/ha)",
+  "supported_crops": [
+    "soybean",
+    "cotton",
+    "groundnut",
+    "maize",
+    "pigeonpea",
+    "sorghum",
+    "wheat"
+  ],
+  "supported_districts": [
+    "Ahmednagar",
+    "Akola",
+    "Amravati",
+    "Aurangabad",
+    "Beed",
+    "Bhandara",
+    "Bombay",
+    "Buldhana",
+    "Chandrapur",
+    "Dhule",
+    "Jalgaon",
+    "Kolhapur",
+    "Nagpur",
+    "Nanded",
+    "Nashik",
+    "Osmanabad",
+    "Parbhani",
+    "Pune",
+    "Raigad",
+    "Ratnagiri",
+    "Sangli",
+    "Satara",
+    "Solapur",
+    "Thane",
+    "Wardha",
+    "Yavatmal"
+  ],
+  "training_observations": 2990,
+  "test_observations": 630,
+  "test_metrics": {
+    "rmse_t_ha": 0.5944,
+    "mae_t_ha": 0.3885,
+    "r2_score": 0.5784
+  }
+}
