@@ -18,6 +18,7 @@ class DistrictMetadata(BaseModel):
     longitude: float
     latitude: float
     fallback_coords: List[Tuple[float, float]] = []
+    alternate_aliases: List[str] = []
     major_soybean_producer: bool = False
 
 
@@ -62,6 +63,7 @@ MAHARASHTRA_DISTRICTS: Dict[str, DistrictMetadata] = {
         region="Marathwada",
         longitude=75.85,
         latitude=19.05,
+        alternate_aliases=["Bhir"],
         major_soybean_producer=True,
     ),
     "Bhandara": DistrictMetadata(
@@ -221,6 +223,7 @@ def get_district_by_name(name: str) -> Optional[DistrictMetadata]:
         if (
             meta.canonical_name.lower() == clean_name.lower()
             or meta.icrisat_alias.lower() == clean_name.lower()
+            or any(a.lower() == clean_name.lower() for a in meta.alternate_aliases)
         ):
             return meta
     return None
