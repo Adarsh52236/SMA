@@ -89,11 +89,11 @@ export default function PredictStudioPage() {
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight">
-            Soybean Yield Prediction Studio
+            Multi-Crop Yield Prediction Studio
           </h1>
           <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1 max-w-2xl">
-            Configure Kharif agroclimatic measurements and ISRIC SoilGrids 0–30 cm soil parameters to run
-            real-time model inference against the FastAPI backend.
+            Configure agroclimatic measurements and ISRIC SoilGrids 0–30 cm soil parameters across 7 supported crops
+            (Soybean, Rice, Wheat, Cotton, Maize, Chickpea, Groundnut) in verified Maharashtra districts.
           </p>
         </div>
 

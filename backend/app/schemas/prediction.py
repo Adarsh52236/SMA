@@ -170,11 +170,11 @@ class SeasonalWeather(BaseModel):
 
 
 class PredictionRequest(BaseModel):
-    """Input payload for Maharashtra Kharif soybean yield prediction."""
+    """Input payload for crop yield prediction across supported crops in Maharashtra."""
 
     crop: str = Field(
         default="Soybean",
-        description="Target agricultural crop. Only 'Soybean' is supported in the current pipeline.",
+        description="Target agricultural crop. Supported: Soybean, Rice, Wheat, Cotton, Maize, Chickpea, Groundnut.",
         json_schema_extra={"example": "Soybean"},
     )
     state: str = Field(
@@ -192,7 +192,7 @@ class PredictionRequest(BaseModel):
     )
     season: str = Field(
         default="Kharif",
-        description="Agricultural growing season. Only 'Kharif' is supported.",
+        description="Agricultural growing season. 'Kharif' (Soybean, Rice, Cotton, Maize, Groundnut) or 'Rabi' (Wheat, Chickpea).",
         json_schema_extra={"example": "Kharif"},
     )
     year: int = Field(
@@ -201,6 +201,11 @@ class PredictionRequest(BaseModel):
         le=2035,
         description="Harvest calendar year.",
         json_schema_extra={"example": 2024},
+    )
+    model_strategy: Optional[str] = Field(
+        default=None,
+        description="Optional model routing strategy: 'legacy_soybean' (single-crop) or 'shared_multicrop' (universal). If omitted, automatically routed.",
+        json_schema_extra={"example": "shared_multicrop"},
     )
 
     soil: SoilProperties
@@ -219,11 +224,19 @@ class PredictionResponse(BaseModel):
         ...,
         description="Estimated crop yield in tonnes per hectare (t/ha).",
     )
+    predicted_yield_kg_ha: float = Field(
+        default=0.0,
+        description="Estimated crop yield in kilograms per hectare (kg/ha).",
+    )
     target_units: str = Field(
         default="tonnes per hectare (t/ha)",
         description="Physical unit of the target prediction.",
     )
     model_name: str
+    model_strategy: str = Field(
+        default="legacy_soybean",
+        description="Active model architecture strategy used for this inference.",
+    )
     model_version: str
     prediction_timing: str = Field(
         default="end_of_season_estimate",
@@ -231,10 +244,14 @@ class PredictionResponse(BaseModel):
     )
     timing_description: str = Field(
         default=(
-            "End-of-season yield estimate using observed Kharif seasonal weather (June 1 - October 31). "
+            "End-of-season yield estimate using observed seasonal weather. "
             "This model reflects retrospective or harvest-time meteorological conditions; "
             "it is not an early-season or pre-sowing forecast."
         )
+    )
+    evaluation_summary: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Summary of benchmark metrics (RMSE, MAE, R²) applicable to this crop and strategy.",
     )
     prediction_interval: Optional[Dict[str, float]] = Field(
         default=None,
@@ -279,3 +296,17 @@ class ModelMetadataResponse(BaseModel):
     test_metrics: Dict[str, Any]
     global_feature_importance: List[Dict[str, Any]]
     limitations: List[str]
+
+    # Phase 5 Multi-crop additions (optional for full backward-compatibility)
+    supported_crops: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description="Registry of supported crops with display names, scientific names, categories, and seasons.",
+    )
+    available_strategies: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description="Available model serving strategies ('legacy_soybean', 'shared_multicrop').",
+    )
+    multicrop_evaluation: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Phase 4 multi-crop temporal and spatial benchmark evaluation results.",
+    )

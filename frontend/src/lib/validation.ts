@@ -12,6 +12,28 @@ export const SUPPORTED_DISTRICTS = [
 
 export type SupportedDistrict = (typeof SUPPORTED_DISTRICTS)[number];
 
+export const SUPPORTED_CROPS = [
+  { id: "soybean", label: "Soybean", defaultSeason: "Kharif", allowedSeasons: ["Kharif"] },
+  { id: "rice", label: "Rice", defaultSeason: "Kharif", allowedSeasons: ["Kharif"] },
+  { id: "wheat", label: "Wheat", defaultSeason: "Rabi", allowedSeasons: ["Rabi"] },
+  { id: "cotton", label: "Cotton", defaultSeason: "Kharif", allowedSeasons: ["Kharif"] },
+  { id: "maize", label: "Maize", defaultSeason: "Kharif", allowedSeasons: ["Kharif"] },
+  { id: "chickpea", label: "Chickpea", defaultSeason: "Rabi", allowedSeasons: ["Rabi"] },
+  { id: "groundnut", label: "Groundnut", defaultSeason: "Kharif", allowedSeasons: ["Kharif"] },
+] as const;
+
+export type SupportedCropId = (typeof SUPPORTED_CROPS)[number]["id"];
+
+export const CROP_ALLOWED_SEASONS: Record<string, string[]> = {
+  soybean: ["Kharif"],
+  rice: ["Kharif"],
+  wheat: ["Rabi"],
+  cotton: ["Kharif"],
+  maize: ["Kharif"],
+  chickpea: ["Rabi"],
+  groundnut: ["Kharif"],
+};
+
 export interface FieldValidationRule {
   min: number;
   max: number;
@@ -72,13 +94,13 @@ export const VALIDATION_RULES = {
     description: "CEC at pH 7 [0, 120 cmol(+)/kg]",
   },
 
-  // Seasonal Weather (Kharif: June 1 - Oct 31)
+  // Seasonal Weather
   cumulative_rainfall_mm: {
     min: 0.0,
     max: 5000.0,
     unit: "mm",
     label: "Cumulative Rainfall",
-    description: "Total precipitation during Kharif [0, 5000 mm]",
+    description: "Total precipitation during growing season [0, 5000 mm]",
   },
   mean_temp_max_c: {
     min: 15.0,
@@ -113,14 +135,14 @@ export const VALIDATION_RULES = {
     max: 153,
     unit: "days",
     label: "Max Consecutive Dry Days",
-    description: "Longest dry spell (<2.5mm/day) across 153-day Kharif season",
+    description: "Longest dry spell (<2.5mm/day) across the growing season",
   },
   heat_stress_days: {
     min: 0,
     max: 153,
     unit: "days",
     label: "Heat Stress Days",
-    description: "Count of days with max temperature >35°C during Kharif",
+    description: "Count of days with max temperature >35°C during season",
   },
   year: {
     min: 1990,
@@ -143,18 +165,30 @@ export function validatePredictionRequest(data: PredictionRequest): ValidationEr
 
   // District validation
   if (!SUPPORTED_DISTRICTS.includes(data.district as SupportedDistrict)) {
-    errors.district = `District '${data.district}' is not supported. Supported: ${SUPPORTED_DISTRICTS.join(", ")}`;
+    errors.district = `District '${data.district}' is not supported. Supported: ${SUPPORTED_DISTRICTS.join(", ")}. Note that unverified regions (e.g., Thane, Kalyan) lack verified SoilGrids baseline profiles.`;
   }
 
-  // Scope constraints
-  if (data.crop.toLowerCase() !== "soybean") {
-    errors.crop = "Only 'Soybean' is currently supported by the trained pipeline.";
+  // Crop validation
+  const cropRaw = data.crop || "Soybean";
+  const cropNorm = cropRaw.trim().toLowerCase();
+  const matchedCrop = SUPPORTED_CROPS.find((c) => c.id === cropNorm || c.label.toLowerCase() === cropNorm);
+  if (!matchedCrop) {
+    errors.crop = `Crop '${cropRaw}' is not supported. Supported crops: ${SUPPORTED_CROPS.map((c) => c.label).join(", ")}.`;
   }
-  if (data.state.toLowerCase() !== "maharashtra") {
+
+  // State validation
+  if (data.state && data.state.toLowerCase() !== "maharashtra") {
     errors.state = "Only 'Maharashtra' is supported.";
   }
-  if (data.season.toLowerCase() !== "kharif") {
-    errors.season = "Only the 'Kharif' growing season is supported.";
+
+  // Season validation per crop
+  const season = data.season || (matchedCrop ? matchedCrop.defaultSeason : "Kharif");
+  if (matchedCrop) {
+    const allowed = CROP_ALLOWED_SEASONS[matchedCrop.id] || ["Kharif"];
+    const seasonNorm = season.trim().charAt(0).toUpperCase() + season.trim().slice(1).toLowerCase();
+    if (!allowed.includes(seasonNorm)) {
+      errors.season = `Season '${season}' is not supported for ${matchedCrop.label}. Supported season(s): ${allowed.join(", ")}.`;
+    }
   }
 
   // Year validation

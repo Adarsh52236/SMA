@@ -24,35 +24,32 @@ def predict_crop_yield(request: PredictionRequest) -> PredictionResponse:
 
     Executes inference via the trained scikit-learn Random Forest pipeline serialized in Phase 3.
     """
-    predicted_yield = model_service.predict(request)
+    result = model_service.predict(request)
     request_id = f"pred-{uuid.uuid4().hex[:12]}"
 
-    limitations = [
-        "End-of-season yield estimate using observed weather (June-October); not an early-season or pre-sowing forecast.",
-        "Soil properties represent static 0-30cm ISRIC SoilGrids 2.0 weighted averages.",
-        "Validated within Maharashtra agroclimatic conditions; spatial extrapolation outside supported districts is prohibited.",
-    ]
-
     return PredictionResponse(
-        crop=settings.TARGET_CROP,
+        crop=result["crop"],
         state=settings.TARGET_STATE,
-        district=request.district.strip().title(),
-        season=settings.TARGET_SEASON,
+        district=result["district"],
+        season=result["season"],
         year=request.year,
-        predicted_yield_t_ha=predicted_yield,
+        predicted_yield_t_ha=result["predicted_yield_t_ha"],
+        predicted_yield_kg_ha=result["predicted_yield_kg_ha"],
         target_units="tonnes per hectare (t/ha)",
-        model_name=model_service.metadata.get("model_name", "Random_Forest") if model_service.metadata else "Random_Forest",
+        model_name=result["model_name"],
+        model_strategy=result["model_strategy"],
         model_version=settings.VERSION,
         prediction_timing="end_of_season_estimate",
         timing_description=(
-            "End-of-season yield estimate using observed Kharif seasonal weather (June 1 - October 31). "
+            f"End-of-season yield estimate using observed {result['season']} seasonal weather. "
             "This model reflects retrospective or harvest-time meteorological conditions; "
             "it is not an early-season or pre-sowing forecast."
         ),
+        evaluation_summary=result.get("evaluation_summary"),
         prediction_interval=None,
         feature_contributions=None,
         global_feature_importance=model_service.feature_importance[:5] if model_service.feature_importance else None,
-        limitations=limitations,
+        limitations=result.get("limitations", []),
         request_id=request_id,
     )
 

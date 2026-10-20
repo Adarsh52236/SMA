@@ -26,10 +26,13 @@ def get_readiness(response: Response):
     if model_service.is_loaded:
         return {
             "status": "ready",
-            "model_name": model_service.metadata.get("model_name") if model_service.metadata else "Unknown",
+            "model_name": model_service.legacy_metadata.get("model_name") if model_service.legacy_metadata else "Unknown",
             "model_version": settings.VERSION,
             "target_crop": settings.TARGET_CROP,
             "target_state": settings.TARGET_STATE,
+            "multicrop_ready": model_service.is_multicrop_loaded,
+            "supported_crops": settings.SUPPORTED_CROPS,
+            "supported_districts": settings.SUPPORTED_DISTRICTS,
         }
     else:
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE

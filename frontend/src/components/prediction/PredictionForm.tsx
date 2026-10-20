@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { PredictionRequest, PredictionResponse } from "@/lib/types";
 import {
   SUPPORTED_DISTRICTS,
+  SUPPORTED_CROPS,
   VALIDATION_RULES,
   validatePredictionRequest,
   calculateSiltPercentage,
@@ -22,6 +23,8 @@ import {
   RotateCcw,
   HelpCircle,
   Calculator,
+  Cpu,
+  Info,
 } from "lucide-react";
 
 interface PredictionFormProps {
@@ -41,6 +44,7 @@ export function PredictionForm({
     district: "Akola",
     season: "Kharif",
     year: 2024,
+    model_strategy: "legacy_soybean",
     soil: {
       soil_ph: 7.4,
       organic_carbon_pct: 0.65,
@@ -67,7 +71,23 @@ export function PredictionForm({
 
   // Field change handlers
   const handleScopeChange = (field: keyof PredictionRequest, value: string | number) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      const next = { ...prev, [field]: value };
+      if (field === "crop") {
+        const cropStr = String(value).toLowerCase();
+        const cropInfo = SUPPORTED_CROPS.find((c) => c.id === cropStr || c.label.toLowerCase() === cropStr);
+        if (cropInfo) {
+          next.season = cropInfo.defaultSeason;
+          if (cropInfo.id === "soybean") {
+            next.model_strategy = prev.model_strategy || "legacy_soybean";
+          } else {
+            next.model_strategy = "shared_multicrop";
+          }
+        }
+      }
+      return next;
+    });
+
     if (errors[field]) {
       setErrors((prev) => {
         const next = { ...prev };
@@ -129,6 +149,10 @@ export function PredictionForm({
     setApiError(null);
   };
 
+  const currentCropInfo = SUPPORTED_CROPS.find(
+    (c) => c.label.toLowerCase() === (formData.crop || "").toLowerCase() || c.id === (formData.crop || "").toLowerCase()
+  ) || SUPPORTED_CROPS[0];
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setApiError(null);
@@ -137,7 +161,6 @@ export function PredictionForm({
     const validationErrors = validatePredictionRequest(formData);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
-      // Scroll to first error
       const firstErrorKey = Object.keys(validationErrors)[0];
       const element = document.getElementById(firstErrorKey);
       if (element) {
@@ -171,22 +194,22 @@ export function PredictionForm({
           <Sparkles className="w-5 h-5 text-emerald-700 dark:text-emerald-400 shrink-0" />
           <div>
             <h4 className="text-sm font-semibold text-emerald-950 dark:text-emerald-200">
-              Illustrative Sample Scenarios
+              Illustrative Multi-Crop Presets (Demo Only)
             </h4>
             <p className="text-xs text-emerald-800/80 dark:text-emerald-400/80">
-              Populate form with validated example figures for rapid interactive testing.
+              Populate form with validated example figures across supported crops for interactive testing.
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex items-center flex-wrap gap-2 w-full sm:w-auto">
           {ILLUSTRATIVE_PRESETS.map((p) => (
             <button
               key={p.id}
               type="button"
               onClick={() => loadPreset(p.id)}
-              className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white dark:bg-zinc-900 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/40 text-emerald-900 dark:text-emerald-200 transition-colors shadow-2xs"
+              className="px-2.5 py-1 text-xs font-medium rounded-lg bg-white dark:bg-zinc-900 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/40 text-emerald-900 dark:text-emerald-200 transition-colors shadow-2xs"
             >
-              {p.district} Sample
+              {p.crop} ({p.district})
             </button>
           ))}
           <button
@@ -213,37 +236,37 @@ export function PredictionForm({
       {/* 1. Geographic & Crop Scope Card */}
       <Card>
         <CardHeader
-          title="1. Crop & Geographic Location"
-          subtitle="Select verified Maharashtra district with SoilGrids baseline profile."
+          title="1. Crop Selection & Geographic Scope"
+          subtitle="Select supported crop and verified Maharashtra district with SoilGrids baseline profile."
           badge={<MapPin className="w-4 h-4 text-emerald-600" />}
         />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {/* Crop */}
+          {/* Crop Selector */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1.5">
-              Crop Target
+            <label
+              htmlFor="crop"
+              className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1.5"
+            >
+              Target Crop <span className="text-rose-500">*</span>
             </label>
-            <input
-              type="text"
+            <select
+              id="crop"
               value={formData.crop}
-              disabled
-              className="w-full px-3.5 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-sm font-medium cursor-not-allowed"
-            />
-            <span className="text-[11px] text-zinc-400 mt-1 block">Trained for rainfed soybean</span>
-          </div>
-
-          {/* State */}
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1.5">
-              State Domain
-            </label>
-            <input
-              type="text"
-              value={formData.state}
-              disabled
-              className="w-full px-3.5 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-sm font-medium cursor-not-allowed"
-            />
-            <span className="text-[11px] text-zinc-400 mt-1 block">Maharashtra, India</span>
+              onChange={(e) => handleScopeChange("crop", e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+            >
+              {SUPPORTED_CROPS.map((c) => (
+                <option key={c.id} value={c.label}>
+                  {c.label} ({c.defaultSeason})
+                </option>
+              ))}
+            </select>
+            <span className="text-[11px] text-zinc-500 mt-1 block">
+              7 verified crops in registry
+            </span>
+            {errors.crop && (
+              <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{errors.crop}</p>
+            )}
           </div>
 
           {/* District Selection */}
@@ -274,7 +297,35 @@ export function PredictionForm({
             )}
           </div>
 
-          {/* Season & Year */}
+          {/* Growing Season */}
+          <div>
+            <label
+              htmlFor="season"
+              className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1.5"
+            >
+              Growing Season
+            </label>
+            <select
+              id="season"
+              value={formData.season}
+              onChange={(e) => handleScopeChange("season", e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+            >
+              {currentCropInfo.allowedSeasons.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+            <span className="text-[11px] text-zinc-500 mt-1 block">
+              Aligned with crop cycle
+            </span>
+            {errors.season && (
+              <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{errors.season}</p>
+            )}
+          </div>
+
+          {/* Harvest Year */}
           <div>
             <label
               htmlFor="year"
@@ -291,18 +342,57 @@ export function PredictionForm({
               onChange={(e) => handleScopeChange("year", parseInt(e.target.value) || 2024)}
               className="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
             />
-            <span className="text-[11px] text-zinc-500 mt-1 block">Kharif harvest year</span>
+            <span className="text-[11px] text-zinc-500 mt-1 block">Harvest year [1990–2035]</span>
             {errors.year && (
               <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{errors.year}</p>
             )}
           </div>
         </div>
+
+        {/* Model Strategy & Coverage Notice */}
+        <div className="mt-5 pt-5 border-t border-zinc-200 dark:border-zinc-800 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/60">
+            <div className="flex items-center gap-2 mb-1.5">
+              <Cpu className="w-4 h-4 text-emerald-600" />
+              <label className="text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+                Model Strategy
+              </label>
+            </div>
+            <select
+              value={formData.model_strategy || "legacy_soybean"}
+              onChange={(e) => handleScopeChange("model_strategy", e.target.value)}
+              disabled={formData.crop?.toLowerCase() !== "soybean"}
+              className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs font-medium focus:ring-2 focus:ring-emerald-500 outline-none disabled:bg-zinc-100 dark:disabled:bg-zinc-800 disabled:text-zinc-500"
+            >
+              {formData.crop?.toLowerCase() === "soybean" ? (
+                <>
+                  <option value="legacy_soybean">Legacy Production Soybean Pipeline (Trained 1990–2010)</option>
+                  <option value="shared_multicrop">Phase 4 Universal Multi-Crop Random Forest (Trained 1990–2010)</option>
+                </>
+              ) : (
+                <option value="shared_multicrop">Phase 4 Universal Multi-Crop Random Forest</option>
+              )}
+            </select>
+            <p className="text-[11px] text-zinc-500 mt-1.5">
+              {formData.crop?.toLowerCase() === "soybean"
+                ? "Soybean can be evaluated using either the baseline production model or the shared multi-crop pipeline."
+                : `Non-soybean crops (${formData.crop}) route exclusively to the verified shared multi-crop model.`}
+            </p>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/50 flex items-start gap-2.5">
+            <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <div className="text-xs text-amber-900 dark:text-amber-200 leading-relaxed">
+              <strong>Coverage Boundary:</strong> Only 7 districts in Maharashtra have verified ISRIC SoilGrids 2.0 pedological profiles. Other districts (such as Thane / Kalyan) are not supported.
+            </div>
+          </div>
+        </div>
       </Card>
 
-      {/* 2. Kharif Seasonal Weather Indicators Card */}
+      {/* 2. Seasonal Weather Indicators Card */}
       <Card>
         <CardHeader
-          title="2. Kharif Seasonal Agroclimatology (June 1 – October 31)"
+          title={`2. Seasonal Agroclimatology (${formData.season || "Kharif"})`}
           subtitle="Observed weather indicators across the 153-day growing season. End-of-season inputs required."
           badge={<CloudRain className="w-4 h-4 text-emerald-600" />}
         />

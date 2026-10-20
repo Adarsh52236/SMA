@@ -35,20 +35,30 @@ export default function MethodologyPage() {
       {/* 1. Problem Formulation & Scope */}
       <section className="space-y-4">
         <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-          <span>1. Problem Formulation & Agricultural Focus</span>
+          <span>1. Problem Formulation & Multi-Crop Scope</span>
         </h2>
         <Card>
           <div className="space-y-4 text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
             <p>
-              Soybean (<em>Glycine max</em>) represents a critical cash and protein crop across central India,
-              cultivated predominantly under <strong>rainfed conditions during the Kharif monsoon</strong> (June–October).
-              In Maharashtra, the Vidarbha and Marathwada regions experience substantial year-to-year yield volatility
-              driven by monsoon timing, mid-season dry spells, and heavy vertisol clay dynamics.
+              Central Indian agriculture spans diverse cropping systems: rainfed monsoon (Kharif) crops such as
+              <strong> Soybean, Rice, Cotton, Maize, and Groundnut</strong>, alongside post-monsoon (Rabi) irrigated crops
+              such as <strong>Wheat and Chickpea</strong>. In Maharashtra, the Vidarbha, Marathwada, and Western regions
+              experience substantial yield volatility driven by monsoon timing, dry spells, thermal stress, and edaphic properties.
             </p>
             <p>
-              <strong>Objective:</strong> To develop an empirical, reproducible machine learning pipeline that models
-              historical soybean yield in tonnes per hectare (t/ha) using authentic meteorological and
-              topsoil properties without synthetic data fabrication or temporal lookahead leakage.
+              <strong>Dual-Model Serving Architecture:</strong>
+            </p>
+            <ul className="list-disc pl-5 space-y-1.5 text-xs">
+              <li>
+                <strong>Legacy Production Pipeline:</strong> Specialized single-crop model trained exclusively on 145 historical soybean harvest records (1990–2010) across 7 Maharashtra districts. Retained for exact historical backwards compatibility.
+              </li>
+              <li>
+                <strong>Phase 4 Universal Multi-Crop Pipeline:</strong> Multimodal shared Random Forest trained on 3,844 records across 7 distinct crop varieties (1990–2010), learning joint cross-crop edaphic and meteorological response dynamics.
+              </li>
+            </ul>
+            <p className="text-xs text-zinc-500">
+              <strong>Objective:</strong> Deliver empirical, reproducible, coverage-aware crop yield estimates (t/ha and kg/ha)
+              governed by strict geographic and seasonal validation boundaries without synthetic fabrication.
             </p>
           </div>
         </Card>

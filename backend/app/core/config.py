@@ -50,9 +50,24 @@ class Settings(BaseSettings):
     METADATA_FILENAME: str = "model_metadata.json"
     REPORTS_DIR: str = str(PROJECT_ROOT / "reports" / "modeling")
 
+    # Multi-crop universal model artifacts
+    MULTICROP_MODEL_DIR: str = str(BACKEND_ROOT / "models" / "experiments" / "multicrop")
+    MULTICROP_MODEL_FILENAME: str = "shared_random_forest.joblib"
+    MULTICROP_METADATA_FILENAME: str = "multicrop_experiment_metadata.json"
+
     TARGET_CROP: str = "Soybean"
     TARGET_STATE: str = "Maharashtra"
     TARGET_SEASON: str = "Kharif"
+
+    SUPPORTED_CROPS: List[str] = [
+        "soybean",
+        "rice",
+        "wheat",
+        "cotton",
+        "maize",
+        "chickpea",
+        "groundnut",
+    ]
 
     SUPPORTED_DISTRICTS: List[str] = [
         "Ahmednagar",

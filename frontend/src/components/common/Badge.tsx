@@ -2,7 +2,7 @@ import React from "react";
 
 interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   children: React.ReactNode;
-  variant?: "default" | "emerald" | "amber" | "rose" | "zinc" | "blue";
+  variant?: "default" | "emerald" | "amber" | "rose" | "zinc" | "blue" | "purple";
   size?: "sm" | "md";
 }
 
@@ -20,6 +20,7 @@ export function Badge({
     rose: "bg-rose-50 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200/80 dark:border-rose-800/60",
     zinc: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700",
     blue: "bg-blue-50 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200/80 dark:border-blue-800/60",
+    purple: "bg-purple-50 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border-purple-200/80 dark:border-purple-800/60",
   };
 
   const sizeStyles = {

@@ -186,7 +186,7 @@ def test_rejection_of_unsupported_crop_or_season(valid_prediction_payload):
     """Verify that unsupported crops or seasons are rejected with HTTP 422."""
     with TestClient(app) as client:
         payload_crop = json.loads(json.dumps(valid_prediction_payload))
-        payload_crop["crop"] = "Cotton"
+        payload_crop["crop"] = "Barley"
         resp_crop = client.post("/api/v1/predict", json=payload_crop)
         assert resp_crop.status_code == 422
         assert "Unsupported crop" in resp_crop.json()["detail"]

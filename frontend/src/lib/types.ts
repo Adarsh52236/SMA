@@ -32,11 +32,12 @@ export interface SeasonalWeather {
 }
 
 export interface PredictionRequest {
-  crop: string;
-  state: string;
+  crop?: string;
+  state?: string;
   district: string;
-  season: string;
+  season?: string;
   year: number;
+  model_strategy?: "legacy_soybean" | "shared_multicrop" | null;
   soil: SoilProperties;
   weather: SeasonalWeather;
 }
@@ -54,15 +55,18 @@ export interface PredictionResponse {
   season: string;
   year: number;
   predicted_yield_t_ha: number;
+  predicted_yield_kg_ha?: number | null;
   target_units: string;
   model_name: string;
   model_version: string;
+  model_strategy?: string | null;
   prediction_timing: string;
   timing_description: string;
   prediction_interval: Record<string, number> | null;
   feature_contributions: Record<string, number> | null;
   global_feature_importance: GlobalFeatureImportanceItem[] | null;
   limitations: string[];
+  evaluation_summary?: Record<string, unknown> | null;
   request_id?: string | null;
 }
 
@@ -73,6 +77,14 @@ export interface SupportedFeatureMeta {
   source: string;
   availability_time: string;
   description: string;
+}
+
+export interface CropCatalogItem {
+  id: string;
+  display_name: string;
+  category: string;
+  supported_seasons: string[];
+  verified_districts: string[];
 }
 
 export interface ModelMetadataResponse {
@@ -89,6 +101,29 @@ export interface ModelMetadataResponse {
   validation_period: [number, number];
   test_period: [number, number];
   supported_districts: string[];
+  supported_crops?: Record<string, CropCatalogItem>;
+  available_strategies?: string[];
+  multicrop_evaluation?: {
+    temporal_split?: {
+      evaluation_period: [number, number];
+      test_samples: number;
+      models: Record<string, { rmse_t_ha: number; mae_t_ha: number; r2_score: number }>;
+    };
+    spatial_leave_one_district_out?: {
+      evaluation_type: string;
+      districts_evaluated: string[];
+      mean_metrics: Record<string, { rmse_t_ha: number; mae_t_ha: number; r2_score: number }>;
+    };
+    per_crop_temporal?: Record<
+      string,
+      {
+        test_samples: number;
+        mean_yield_t_ha: number;
+        shared_rf: { rmse_t_ha: number; mae_t_ha: number; r2_score: number };
+        crop_district_mean_baseline: { rmse_t_ha: number; mae_t_ha: number; r2_score: number };
+      }
+    >;
+  };
   supported_features: SupportedFeatureMeta[];
   validation_metrics: {
     mae_t_ha: number;

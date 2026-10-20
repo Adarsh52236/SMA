@@ -38,7 +38,7 @@ export function PredictionResult({
     }
   };
 
-  const yieldKgHa = Math.round(result.predicted_yield_t_ha * 1000);
+  const yieldKgHa = result.predicted_yield_kg_ha ?? Math.round(result.predicted_yield_t_ha * 1000);
   const yieldQuintalHa = (result.predicted_yield_t_ha * 10).toFixed(2);
 
   return (
@@ -47,21 +47,26 @@ export function PredictionResult({
       <Card className="border-emerald-200 dark:border-emerald-800/80 bg-gradient-to-br from-white via-emerald-50/20 to-emerald-100/30 dark:from-zinc-900 dark:via-emerald-950/20 dark:to-zinc-900 p-8 shadow-md">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-6 border-b border-emerald-100 dark:border-emerald-900/50">
           <div>
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center flex-wrap gap-2 mb-2">
               <Badge variant="emerald" size="md">
                 <Clock className="w-3.5 h-3.5" />
                 <span>End-of-Season Yield Estimate</span>
               </Badge>
               <Badge variant="zinc" size="md">
-                Model: {result.model_name}
+                Model: {result.model_name} (v{result.model_version})
               </Badge>
+              {result.model_strategy && (
+                <Badge variant={result.model_strategy.includes("multicrop") ? "purple" : "blue"} size="md">
+                  Strategy: {result.model_strategy.replace(/_/g, " ")}
+                </Badge>
+              )}
             </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-zinc-50 tracking-tight">
-              Estimated Soybean Yield
+              Estimated {result.crop} Yield
             </h2>
             <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1 max-w-xl">
-              Calculated using observed Kharif seasonal agroclimatology (June 1 – October 31) and
-              ISRIC SoilGrids 0–30 cm pedological characteristics.
+              Calculated using observed {result.season} seasonal agroclimatology and
+              ISRIC SoilGrids 0–30 cm pedological characteristics for {result.district} district.
             </p>
           </div>
 
@@ -79,7 +84,9 @@ export function PredictionResult({
               </span>
             </div>
             <div className="flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400 mt-2">
-              <span>≈ {yieldKgHa.toLocaleString()} kg/ha</span>
+              <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+                {yieldKgHa.toLocaleString()} kg/ha
+              </span>
               <span>•</span>
               <span>≈ {yieldQuintalHa} quintal/ha</span>
             </div>
@@ -113,7 +120,7 @@ export function PredictionResult({
             <div>
               <span className="text-xs text-zinc-400 block">Crop Variety Focus</span>
               <span className="font-semibold text-zinc-800 dark:text-zinc-200">
-                {result.crop} (Rainfed)
+                {result.crop}
               </span>
             </div>
           </div>
@@ -136,10 +143,12 @@ export function PredictionResult({
           <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
           <div className="space-y-1">
             <h4 className="text-sm font-semibold text-amber-900 dark:text-amber-200">
-              Important Prediction Timing Notice
+              Important Scientific Notice: Prediction vs. Historical Reality
             </h4>
             <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
-              {result.timing_description}
+              {result.timing_description} Historical model estimates are retrospective statistical inferences
+              based on agroclimatic and pedological covariates, not guaranteed actual field harvest yields.
+              Observed historical yields remain the ground truth for agronomic accounting.
             </p>
           </div>
         </div>
