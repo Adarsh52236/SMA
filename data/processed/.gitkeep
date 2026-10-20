@@ -1,0 +1,2 @@
+# Processed data directory
+# Final aligned datasets (aligned by district, crop, season, year) ready for train/val/test splits and baseline modeling.
