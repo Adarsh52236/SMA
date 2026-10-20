@@ -24,15 +24,16 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3000",
         "https://sma-production.up.railway.app",
         "https://sma-frontend.vercel.app",
+        "https://sma.vercel.app",
     ]
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
         if isinstance(v, str) and not v.startswith("["):
-            return [i.strip() for i in v.split(",") if i.strip()]
+            return [i.strip().rstrip("/") for i in v.split(",") if i.strip()]
         elif isinstance(v, list):
-            return v
+            return [i.strip().rstrip("/") if isinstance(i, str) else i for i in v]
         return []
 
     # Model artifact directory and target model name

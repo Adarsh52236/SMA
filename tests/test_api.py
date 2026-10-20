@@ -250,6 +250,23 @@ def test_cors_headers_on_requests():
         assert response.headers.get("access-control-allow-origin") == "http://localhost:3000"
 
 
+def test_cors_options_preflight_for_production_origins():
+    """Verify CORS OPTIONS preflight request returns 200 with appropriate allow headers for production Vercel."""
+    with TestClient(app) as client:
+        for origin in ["https://sma-frontend.vercel.app", "https://sma.vercel.app"]:
+            response = client.options(
+                "/api/v1/predict",
+                headers={
+                    "Origin": origin,
+                    "Access-Control-Request-Method": "POST",
+                    "Access-Control-Request-Headers": "content-type",
+                },
+            )
+            assert response.status_code == 200
+            assert response.headers.get("access-control-allow-origin") == origin
+            assert "POST" in response.headers.get("access-control-allow-methods", "")
+
+
 # --- 10. Pipeline & Metadata Schema Consistency ---
 
 def test_pipeline_metadata_schema_consistency():

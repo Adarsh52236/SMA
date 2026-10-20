@@ -82,8 +82,13 @@ class ModelService:
             self.error_message = None
 
             # 3. Load permutation feature importance table if available
-            pfi_csv = os.path.join(settings.REPORTS_DIR, "feature_importance.csv")
-            if os.path.exists(pfi_csv):
+            pfi_candidates = [
+                os.path.join(settings.REPORTS_DIR, "feature_importance.csv"),
+                os.path.join(settings.MODEL_DIR, "feature_importance.csv"),
+                os.path.join(os.path.dirname(settings.MODEL_DIR), "models", "feature_importance.csv"),
+            ]
+            pfi_csv = next((p for p in pfi_candidates if os.path.exists(p)), None)
+            if pfi_csv:
                 try:
                     df_imp = pd.read_csv(pfi_csv)
                     self.feature_importance = [

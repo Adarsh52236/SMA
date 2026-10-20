@@ -47,6 +47,8 @@ data/processed/*
 *.pkl
 *.h5
 *.onnx
+!backend/models/*.joblib
+!backend/models/*.csv
 
 # Node / Next.js
 frontend/node_modules/
