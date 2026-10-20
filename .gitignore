@@ -44,12 +44,15 @@ data/interim/*
 !data/interim/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
+!data/processed/crop_yield_multicrop.csv
 *.joblib
 *.pkl
 *.h5
 *.onnx
 !backend/models/*.joblib
+!backend/models/**/*.joblib
 !backend/models/*.csv
+!backend/models/**/*.csv
 
 # Node / Next.js
 frontend/node_modules/
