@@ -1,0 +1,9 @@
+model_name,column_key,architecture_family,temporal_test_count,temporal_rmse_t_ha,temporal_mae_t_ha,temporal_r2,temporal_bias_t_ha,spatial_cv_count,spatial_rmse_t_ha,spatial_mae_t_ha,spatial_r2
+Global Mean Baseline,Baseline_GlobalMean,Empirical Baseline,225,0.7322,0.5579,-0.0037,-0.0442,,,,
+Crop Mean Baseline,Baseline_CropMean,Empirical Baseline,225,0.5813,0.4278,0.3675,-0.0391,1293.0,0.4521,0.3318,0.4656
+Historical Crop-District Mean,Baseline_HistoricalMean,Empirical Baseline,225,0.5337,0.387,0.4669,-0.0372,,,,
+Shared Random Forest,Shared_RandomForest,Non-linear Ensemble,225,0.552,0.3788,0.4295,-0.0329,1293.0,0.4332,0.3146,0.5093
+Shared Gradient Boosting,Shared_GradientBoosting,Gradient Boosting,225,0.5506,0.3819,0.4325,-0.0487,1293.0,0.4338,0.3191,0.508
+Shared Extra Trees,Shared_ExtraTrees,Tree Ensemble,225,0.5634,0.3906,0.4059,-0.0311,,,,
+Shared HistGradientBoosting,Shared_HistGradientBoosting,Histogram Boosting,225,0.5702,0.3934,0.3913,-0.0428,,,,
+Dedicated Crop-Specific RF,CropSpecific_RandomForest,Dedicated Models,225,0.5551,0.3805,0.4232,-0.0243,1293.0,0.4409,0.3215,0.4916

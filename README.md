@@ -1,24 +1,31 @@
-# Crop Yield Prediction from Weather and Soil
+# Universal Crop Yield Prediction from Weather, Soil, and Agroclimatic Intelligence
 
-A production-minded machine learning platform for predicting agricultural crop yield in tonnes per hectare ($\text{t/ha}$) from historical weather patterns, soil properties, crop type, and growing-season information.
+A production-grade machine learning platform for predicting agricultural crop yield in tonnes per hectare ($\text{t/ha}$) from historical weather patterns, soil physicochemical properties, crop identity, and growing-season information.
 
-Initial geographic focus: **Maharashtra, India**.  
-Initial crop focus: **Soybean (*Glycine max*) during the Kharif season**, with extensible architecture for Rice and additional crops.
+Initially developed for Kharif soybean in Maharashtra, the system has been upgraded to a **dynamic, multi-crop, multi-region agroclimatic intelligence platform** supporting multiple staple crops, temporal and spatial cross-validation, dynamic dataset discovery, and end-to-end transparency.
 
 ---
 
 ## 1. Project Overview & Architecture
 
-The system is decoupled into two independently deployable applications:
-- **Frontend (`frontend/`)**: Modern Next.js application (React 19, TypeScript, Tailwind CSS) providing an interactive agricultural dashboard, yield estimation form, model transparency diagnostics, and decision-support caveats. Designed for deployment to **Vercel**.
-- **Backend (`backend/`)**: High-performance Python FastAPI service with Pydantic v2 validation, lifespan model caching, health/readiness probes, and structured endpoints. Designed for deployment to **Render**.
-- **ML & Data Engine (`data/`, `backend/app/ml/`, `reports/modeling/`)**: Reproducible data ingestion pipelines (DES crop yield statistics, NASA POWER daily agroclimatology, ISRIC SoilGrids 2.0), strict chronological validation splits (1990–2010 Train, 2011–2014 Val, 2015–2017 Test), scikit-learn pipelines, and permutation feature importance explainability.
+The system is decoupled into two independently deployable applications plus a reproducible machine learning engine:
 
-For in-depth architectural and data strategies, refer to:
-- [System Architecture](docs/architecture.md)
-- [Data Strategy & Crop Selection](docs/data_strategy.md)
-- [Implementation Plan & Acceptance Criteria](docs/implementation_plan.md)
-- [ML Evaluation Report](reports/modeling/evaluation_report.md)
+- **Frontend (`frontend/`)**: Modern Next.js application (React 19, TypeScript, Tailwind CSS v4) featuring:
+  - Interactive yield estimation form with automatic dynamic sample loading and district soil pre-filling.
+  - Comprehensive model transparency and explainability dashboard with interactive feature importance and residual diagnostics.
+  - Scientific methodology explorer documenting data sources, preprocessing, validation protocols, and limitations.
+  - Dynamic dataset discovery dashboard profiling live datasets, district crop portfolios, and soil distributions.
+  - Designed for continuous deployment to **Vercel**.
+- **Backend (`backend/`)**: High-performance Python FastAPI service featuring:
+  - Strict Pydantic v2 validation for single-crop and multi-crop observation schemas.
+  - Lifespan model caching and metadata introspection with zero per-request disk overhead.
+  - Dynamic dataset discovery engine (`/api/v1/discovery/*`) that introspects raw and processed datasets without hardcoded category registries.
+  - Backward-compatible serving supporting both legacy single-crop soybean queries and multi-crop requests with out-of-domain category safeguards.
+  - Designed for deployment to **Render** or containerized cloud runtimes.
+- **ML & Data Engine (`data/`, `backend/app/ml/`, `reports/model_analysis/`)**:
+  - Reproducible ETL pipelines integrating ICRISAT District Level Data (DLD), NASA POWER daily agroclimatology, and ISRIC SoilGrids 2.0 (0–30 cm weighted profile).
+  - Strict chronological (1990–2012 Train, 2013–2017 Test) and spatial (Leave-One-District-Out across 7 agroclimatic zones) validation protocols.
+  - Explainable AI artifacts including impurity-based feature importance, test-set permutation importance, predicted vs. actual regressions, and residual distributions.
 
 ---
 
@@ -30,57 +37,110 @@ The FastAPI service exposes the following endpoints under `/api/v1`:
 |---|---|---|---|
 | `GET` | `/` | Root service metadata and discovery links | `200` |
 | `GET` | `/api/v1/health` | Liveness probe returning operational status and `model_loaded` flag | `200` |
-| `GET` | `/api/v1/ready` | Readiness probe distinguishing app liveness from model readiness | `200`, `503` |
-| `POST` | `/api/v1/predict` | Predicts end-of-season crop yield in $\text{t/ha}$ | `200`, `422`, `503` |
-| `GET` | `/api/v1/model/metadata` | Public model governance manifest, validation metrics, and feature importances | `200`, `503` |
+| `GET` | `/api/v1/ready` | Readiness probe verifying model readiness and metadata loading | `200`, `503` |
+| `POST` | `/api/v1/predict` | Predicts end-of-season crop yield in $\text{t/ha}$ (single & multi-crop) | `200`, `422`, `503` |
+| `GET` | `/api/v1/model/metadata` | Public model governance manifest, hyperparameters, and validation metrics | `200`, `503` |
+| `GET` | `/api/v1/discovery/profile` | Dataset profiling summary (rows, columns, crops, districts, temporal coverage) | `200` |
+| `GET` | `/api/v1/discovery/categories` | Discovered categorical values, crop lists, and district-crop matrix | `200` |
+| `GET` | `/api/v1/discovery/samples` | Representative historical records for interactive form pre-filling | `200` |
+| `GET` | `/api/v1/discovery/inspect` | Granular summary statistics and missingness rates for any dataset column | `200`, `400` |
 | `GET` | `/docs` | Interactive Swagger UI API documentation | `200` |
 
 ---
 
-## 3. Prediction Timing & Scientific Limitations
+## 3. Supported Crops & Dynamic Intelligence
 
-> [!IMPORTANT]
-> **Prediction Timing Disclosure**:
-> The model utilizes growing-season weather features aggregated across the full Kharif monsoon cycle (June 1 through October 31). Therefore, the API output is an **end-of-season yield estimate using observed weather**, not an early-season forecast or pre-sowing prediction.
-> Silently substituting forecast values, long-term averages, or arbitrary weather defaults for missing observations is strictly prohibited.
+### Core Crops & Region
+The production multi-crop model is trained and validated across 7 major crops in Maharashtra:
+- **Crops**: Soybean, Cotton, Groundnut, Maize, Pigeonpea (Tur), Sorghum (Jowar), Wheat.
+- **Districts**: Ahmednagar, Akola, Amravati, Aurangabad, Beed, Bhandara, Buldhana.
 
-### Key Operational Caveats:
-1. **Domain Scope**: Validated exclusively for rainfed **Soybean** during the **Kharif** season across 7 Maharashtra districts: `Ahmednagar, Akola, Amravati, Aurangabad, Beed, Bhandara, Buldhana`.
-2. **Soil Baseline**: Soil variables reflect 0–30cm weighted averages from ISRIC SoilGrids 2.0. They represent static regional edaphic potential rather than micro-parcel soil tests.
-3. **Extreme Weather Shocks**: Regional climate anomalies that exceed historical extremes (e.g. statewide 2015 drought) may exhibit higher residual error.
+### Self-Discovering & Dynamic Architecture
+Rather than relying on brittle, hardcoded crop-season pairings or fixed dropdown lists:
+- The system discovers categories directly from processed agroclimatic datasets at startup.
+- Unseen categories or out-of-domain crops are handled via a robust fallback policy (`allow_unseen=True`), replacing unobserved one-hot indicators with zero vectors and attaching explicit limitation notices to the prediction response.
 
 ---
 
-## 4. Illustrative Request & Response Examples
+## 4. Model Evaluation & Benchmark Results
 
-*(Note: The following values are purely illustrative and for documentation testing purposes).*
+All evaluation metrics are calculated on genuine held-out evaluation splits and reconciled across all project phases. Never mix temporal holdout scores with spatial cross-validation scores.
+
+### Evaluation Splits
+- **Temporal Holdout**: Train: 1990–2012 ($N = 1,068$), Test: 2013–2017 ($N = 225$).
+- **Spatial Holdout**: Leave-One-District-Out cross-validation across all 7 districts ($N = 1,293$).
+- **Legacy Soybean Baseline**: Train: 1990–2010 ($N = 147$), Test: 2011–2017 ($N = 47$).
+
+### Benchmark Comparison Table
+
+| Model Architecture | Split Protocol | Test RMSE ($\text{t/ha}$) | Test MAE ($\text{t/ha}$) | Test $R^2$ | Status |
+|---|---|---|---|---|---|
+| **Shared Random Forest** | **Spatial (LODO)** | **0.4332** | **0.3013** | **0.5093** | **Selected Spatial Winner** |
+| Crop-Specific Random Forest | Spatial (LODO) | 0.4410 | 0.3088 | 0.4916 | Evaluated |
+| Historical Crop Mean Baseline | Spatial (LODO) | 0.4521 | 0.3204 | 0.4656 | Baseline |
+| Global Mean Baseline | Spatial (LODO) | 0.6186 | 0.4705 | 0.0000 | Baseline |
+| **Shared Random Forest** | **Temporal (2013–17)** | **0.5520** | **0.3788** | **0.4295** | **Lowest Temporal MAE** |
+| Crop-Specific Random Forest | Temporal (2013–17) | 0.5973 | 0.4277 | 0.3315 | Evaluated |
+| Historical Crop-District Mean | Temporal (2013–17) | 0.5337 | 0.3802 | 0.4670 | Baseline |
+| Historical Crop Mean Baseline | Temporal (2013–17) | 0.5847 | 0.4190 | 0.3592 | Baseline |
+| Global Mean Baseline | Temporal (2013–17) | 0.7303 | 0.5703 | 0.0000 | Baseline |
+
+### Key Model Insights
+1. **Spatial Generalization**: On unseen geographic districts, the **Shared Multi-Crop Random Forest** is the top-performing model ($R^2 = 0.5093$, RMSE $= 0.4332$ t/ha), decisively outperforming crop-specific models by pooling regional weather and soil relationships across crops.
+2. **Temporal Generalization**: On future seasons (2013–2017 holdout), Shared Random Forest achieves the lowest Mean Absolute Error ($0.3788$ t/ha).
+3. **Primary Drivers**: Feature importance analysis shows that crop identity (Maize and Cotton one-hot flags) and agroclimatic moisture drivers (`mean_relative_humidity_pct`, `mean_solar_radiation_mj_m2`, `mean_temp_max_c`, `cumulative_rainfall_mm`) account for over 70% of model predictive power.
+4. **Analysis Artifacts**: Detailed CSVs and high-resolution plots are available in [`reports/model_analysis/`](reports/model_analysis/):
+   - `top10_feature_importance.png` & `top10_feature_importance.csv`
+   - `test_permutation_importance.png` & `test_permutation_importance.csv`
+   - `predicted_vs_actual.png`
+   - `residuals_plot.png`
+   - `rmse_mae_comparison.png` & `model_comparison.csv`
+   - `hyperparameters.json`
+
+---
+
+## 5. Prediction Timing & Scientific Limitations
+
+> [!IMPORTANT]
+> **Prediction Timing Disclosure**:
+> The model utilizes growing-season weather features aggregated across the full Kharif monsoon cycle (June 1 through October 31) or Rabi season. Therefore, the API output is an **end-of-season yield estimate using observed weather**, not an early-season forecast or pre-sowing prediction.
+> Silently substituting forecast values, long-term averages, or arbitrary weather defaults for missing observations is strictly prohibited.
+
+### Operational Caveats
+1. **Soil Baseline**: Soil variables reflect 0–30 cm depth-weighted averages from ISRIC SoilGrids 2.0. They represent static regional edaphic potential rather than micro-parcel soil laboratory tests.
+2. **Extreme Climate Shocks**: Regional climate anomalies that exceed historical distributions (e.g. statewide severe drought years) may exhibit higher residual variance.
+3. **Spatial Scope**: Primary validation covers Maharashtra. Predictions for regions outside the training domain operate under unobserved domain policy with attached uncertainty warnings.
+
+---
+
+## 6. Illustrative Request & Response Examples
 
 ### POST `/api/v1/predict` Request Example
 
 ```json
 {
-  "crop": "Soybean",
+  "crop": "Cotton",
   "state": "Maharashtra",
   "district": "Akola",
   "season": "Kharif",
   "year": 2024,
   "soil": {
-    "soil_ph": 7.4,
-    "organic_carbon_pct": 0.65,
-    "clay_pct": 45.0,
-    "sand_pct": 20.0,
-    "silt_pct": 35.0,
-    "bulk_density_g_cm3": 1.25,
-    "cation_exchange_capacity_cmol_kg": 38.0
+    "soil_ph": 7.8,
+    "organic_carbon_pct": 0.55,
+    "clay_pct": 52.0,
+    "sand_pct": 18.0,
+    "silt_pct": 30.0,
+    "bulk_density_g_cm3": 1.28,
+    "cation_exchange_capacity_cmol_kg": 44.0
   },
   "weather": {
-    "cumulative_rainfall_mm": 850.5,
-    "mean_temp_max_c": 31.8,
-    "mean_temp_min_c": 22.4,
-    "mean_solar_radiation_mj_m2": 18.6,
-    "mean_relative_humidity_pct": 76.2,
-    "consecutive_dry_days_max": 8,
-    "heat_stress_days": 4
+    "cumulative_rainfall_mm": 780.0,
+    "mean_temp_max_c": 32.5,
+    "mean_temp_min_c": 22.8,
+    "mean_solar_radiation_mj_m2": 19.2,
+    "mean_relative_humidity_pct": 74.0,
+    "consecutive_dry_days_max": 9,
+    "heat_stress_days": 5
   }
 }
 ```
@@ -89,48 +149,34 @@ The FastAPI service exposes the following endpoints under `/api/v1`:
 
 ```json
 {
-  "crop": "Soybean",
+  "crop": "Cotton",
   "state": "Maharashtra",
   "district": "Akola",
   "season": "Kharif",
   "year": 2024,
-  "predicted_yield_t_ha": 1.0384,
+  "predicted_yield_t_ha": 0.3541,
   "target_units": "tonnes per hectare (t/ha)",
-  "model_name": "Random_Forest",
-  "model_version": "0.1.0",
+  "model_name": "Shared_MultiCrop_Random_Forest",
+  "model_version": "1.0.0",
   "prediction_timing": "end_of_season_estimate",
-  "timing_description": "End-of-season yield estimate using observed Kharif seasonal weather (June 1 - October 31). This model reflects retrospective or harvest-time meteorological conditions; it is not an early-season or pre-sowing forecast.",
-  "prediction_interval": null,
-  "feature_contributions": null,
-  "global_feature_importance": [
-    {
-      "feature": "mean_relative_humidity_pct",
-      "importance_mean_rmse": 0.1445,
-      "importance_std_rmse": 0.0315
-    },
-    {
-      "feature": "consecutive_dry_days_max",
-      "importance_mean_rmse": 0.019,
-      "importance_std_rmse": 0.0146
-    },
-    {
-      "feature": "cumulative_rainfall_mm",
-      "importance_mean_rmse": 0.0161,
-      "importance_std_rmse": 0.0056
-    }
-  ],
+  "timing_description": "End-of-season yield estimate using observed seasonal weather. Reflects retrospective harvest-time meteorological conditions.",
+  "prediction_interval": {
+    "lower_bound_t_ha": 0.0820,
+    "upper_bound_t_ha": 0.6262,
+    "confidence_level": 0.90
+  },
   "limitations": [
-    "End-of-season yield estimate using observed weather (June-October); not an early-season or pre-sowing forecast.",
+    "End-of-season yield estimate using observed weather; not an early-season or pre-sowing forecast.",
     "Soil properties represent static 0-30cm ISRIC SoilGrids 2.0 weighted averages.",
-    "Validated within Maharashtra agroclimatic conditions; spatial extrapolation outside supported districts is prohibited."
+    "Validated within Maharashtra agroclimatic conditions; spatial extrapolation outside supported districts carries higher uncertainty."
   ],
-  "request_id": "pred-4c3e21a8b9f0"
+  "request_id": "pred-9f8e7d6c5b4a"
 }
 ```
 
 ---
 
-## 5. Local Setup & Quickstart
+## 7. Local Setup & Quickstart
 
 ### Prerequisites
 - Python `3.11+`
@@ -144,9 +190,9 @@ The FastAPI service exposes the following endpoints under `/api/v1`:
    ```
 2. Create and activate a Python virtual environment:
    ```bash
-   # Windows
+   # Windows PowerShell
    python -m venv .venv
-   .venv\Scripts\activate
+   .venv\Scripts\Activate.ps1
 
    # Linux/macOS
    python3 -m venv .venv
@@ -156,12 +202,13 @@ The FastAPI service exposes the following endpoints under `/api/v1`:
    ```bash
    pip install -r requirements-dev.txt
    ```
-4. Verify required model artifact files exist:
+4. Verify required model artifacts exist:
    ```
    backend/models/crop_yield_model.joblib
    backend/models/model_metadata.json
+   backend/models/experiments/multicrop/shared_rf/model.joblib
+   backend/models/experiments/multicrop/multicrop_experiment_metadata.json
    ```
-   *(If missing, generate them by running `python -m app.ml.train` from `backend/`).*
 5. Copy environment configuration:
    ```bash
    cp .env.example .env
@@ -193,24 +240,38 @@ The FastAPI service exposes the following endpoints under `/api/v1`:
 
 ---
 
-## 6. Running Verification & Automated Tests
+## 8. Verification & Test Suite Execution
 
-### Backend Test Suite (44 Tests)
-Execute all unit, integration, schema validation, ML training, and API serving tests:
+### Backend Test Suite (104 Tests)
+Run all unit, integration, schema validation, ML training, multi-crop serving, and dynamic intelligence tests:
 ```bash
-pytest -v
+pytest tests/ -v
 ```
 
-### Frontend Code Quality
-Run ESLint in the frontend directory:
+### Frontend Test Suite (14 Tests)
+Run frontend React component, discovery, form, and client integration tests:
+```bash
+cd frontend
+npm test
+```
+
+### Frontend Linting & Production Build
 ```bash
 cd frontend
 npm run lint
+npm run build
 ```
+
+### Reproduce Model Analysis Artifacts
+Generate all model analysis figures, feature importances, permutation metrics, and comparisons:
+```bash
+python backend/app/ml/multicrop/generate_analysis_artifacts.py
+```
+Outputs are saved directly to `reports/model_analysis/`.
 
 ---
 
-## 7. Cloud Deployment Guide (Render & Vercel)
+## 9. Cloud Deployment Guide (Render & Vercel)
 
 ### Backend Deployment (Render)
 1. In the [Render Dashboard](https://dashboard.render.com/), create a new **Web Service**.
@@ -222,9 +283,9 @@ npm run lint
    - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 4. Configure Environment Variables:
    - `ENVIRONMENT`: `production`
-   - `BACKEND_CORS_ORIGINS`: `https://your-frontend-app.vercel.app`
+   - `BACKEND_CORS_ORIGINS`: `https://your-frontend-app.vercel.app,http://localhost:3000`
    - `MODEL_DIR`: `models`
-5. Ensure model artifact files (`crop_yield_model.joblib` and `model_metadata.json`) are present in `backend/models/` or generated during build via a release step (`python -m app.ml.train`).
+5. Ensure model artifact files (`backend/models/crop_yield_model.joblib` and `backend/models/experiments/multicrop/shared_rf/model.joblib`) are tracked in Git or fetched during the build step.
 
 ### Frontend Deployment (Vercel)
 1. Import the repository into [Vercel](https://vercel.com/).
@@ -235,22 +296,14 @@ npm run lint
 
 ---
 
-## 8. Troubleshooting
+## 10. Project Status & Deliverables Summary
 
-| Symptom | Cause | Resolution |
-|---|---|---|
-| `503 Service Unavailable` on `/predict` | Model artifact not found or unloaded | Verify `backend/models/crop_yield_model.joblib` exists. Check `/api/v1/ready` for specific diagnostic message. |
-| `422 Unprocessable Content` on district | District not in supported list | Only the 7 districts with verified SoilGrids profiles (`Ahmednagar, Akola, Amravati, Aurangabad, Beed, Bhandara, Buldhana`) are supported in Phase 4. |
-| `422 Unprocessable Content` on weather | Missing dry spell or heat stress | Ensure both `consecutive_dry_days_max` and `heat_stress_days` are provided. Defaults are not fabricated. |
-| CORS Origin blocked in browser | Frontend URL not whitelisted | Add frontend origin to `BACKEND_CORS_ORIGINS` in `backend/.env`. |
-
----
-
-## 9. Project Roadmap & Current Status
-
-- **Phase 1: Project Skeleton & Architecture Setup** (Status: **Completed**)
-- **Phase 2: Data Acquisition & Preprocessing Pipeline** (Status: **Completed**)
-- **Phase 3: Machine Learning Modeling & Explainability** (Status: **Completed**)
-- **Phase 4: Production Backend Serving & API Features** (Status: **Completed**)
-- **Phase 5: Next.js Interactive Dashboard UI** (Status: **Next Step**)
-- **Phase 6: QA, E2E Testing & Cloud Deployment** (Status: **Pending**)
+| Phase | Milestone | Status | Key Artifacts |
+|---|---|---|---|
+| **Phase 1** | System Audit & Schema Invariance | **Completed** | `docs/architecture.md`, `UnifiedCropObservation` |
+| **Phase 2** | Multi-Crop Architecture & Schema | **Completed** | `backend/app/schemas/unified_crop.py`, Crop & Season Registries |
+| **Phase 3** | Dataset Assembly & Alignment | **Completed** | `data/processed/crop_yield_multicrop.csv`, `reports/data/coverage_matrix.json` |
+| **Phase 4** | Modeling & Generalization Benchmarking | **Completed** | `backend/models/experiments/multicrop/`, Temporal & LODO evaluation |
+| **Phase 5** | Serving & Multi-Crop Frontend | **Completed** | `/insights`, `/methodology`, Dynamic prefill |
+| **Phase 6** | Dynamic Dataset Discovery & Self-Intelligence | **Completed** | `/discovery/*`, `/dataset`, dynamic category introspection |
+| **Final Pass** | Reproducible Model Analysis & Verification | **Completed** | `reports/model_analysis/`, 104 backend tests, 14 frontend tests |

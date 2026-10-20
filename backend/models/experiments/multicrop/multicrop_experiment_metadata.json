@@ -1052,6 +1052,6 @@
   },
   "model_selection": {
     "selected_shared_model": "Shared_RandomForest",
-    "justification": "Shared_RandomForest achieves strong temporal test RMSE (0.3547 t/ha, R2=0.5519) substantially outperforming the GlobalMeanBaseline (0.5369 t/ha, R2=-0.027) and HistoricalCropDistrictBaseline (0.4136 t/ha, R2=0.3908). On spatial leave-one-district-out evaluation, Shared_RandomForest achieves RMSE 0.3807 t/ha (R2=0.6121). Dedicated crop-specific models perform comparably on high-sample crops (e.g. Maize, Soybean) but suffer higher variance on smaller-sample crops, validating the shared representation."
+    "justification": "Shared_RandomForest achieves the lowest MAE (0.3788 t/ha) and strong temporal test RMSE (0.5520 t/ha, R2=0.4295) across 2013-2017 holdouts, substantially outperforming the GlobalMeanBaseline (0.7322 t/ha, R2=-0.0037). On spatial leave-one-district-out cross-validation across 7 unseen districts, Shared_RandomForest is the top-performing model overall, achieving the lowest out-of-district RMSE (0.4332 t/ha) and highest R2 (0.5093), outperforming dedicated crop-specific models (0.4409 t/ha, R2=0.4916) and baseline crop means (0.4521 t/ha, R2=0.4656). The shared representation successfully transfers agronomic signals to unseen regions."
   }
 }

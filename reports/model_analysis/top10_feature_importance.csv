@@ -1,0 +1,11 @@
+feature,importance
+crop_id_maize,0.23064939946818896
+crop_id_cotton,0.20165231597035468
+mean_relative_humidity_pct,0.09738776220960721
+mean_solar_radiation_mj_m2,0.07112479250870879
+crop_id_wheat,0.06447171809520044
+mean_temp_max_c,0.05146931223258885
+consecutive_dry_days_max,0.04897295630996076
+mean_temp_min_c,0.04552941509398508
+cumulative_rainfall_mm,0.03949627913728867
+heat_stress_days,0.03119490522896767
