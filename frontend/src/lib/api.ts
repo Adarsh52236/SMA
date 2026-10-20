@@ -140,7 +140,7 @@ export const api = {
   },
 
   /**
-   * Run crop yield prediction using the trained Random Forest model pipeline.
+   * Run crop yield prediction using the trained model pipeline with optional exploratory policy.
    */
   async predictCropYield(payload: PredictionRequest): Promise<PredictionResponse> {
     return requestWithTimeout<PredictionResponse>(
@@ -151,5 +151,48 @@ export const api = {
       },
       15000
     );
+  },
+
+  /**
+   * Dataset Discovery: retrieve machine-readable dataset profile, column roles, and quality report.
+   */
+  async getDatasetProfile(): Promise<import("./types").DatasetProfile> {
+    return requestWithTimeout<import("./types").DatasetProfile>("/api/v1/discovery/profile", { method: "GET" }, 10000);
+  },
+
+  /**
+   * Discovered Categories: dynamically retrieve available crops, districts, and observed cross-tabulations.
+   */
+  async getDiscoveredCategories(): Promise<import("./types").DynamicCategoriesResponse> {
+    return requestWithTimeout<import("./types").DynamicCategoriesResponse>(
+      "/api/v1/discovery/categories",
+      { method: "GET" },
+      8000
+    );
+  },
+
+  /**
+   * Dynamic Presets: retrieve authentic observations directly sampled from discovered datasets.
+   */
+  async getDynamicPresets(): Promise<import("./types").DynamicPresetsResponse> {
+    return requestWithTimeout<import("./types").DynamicPresetsResponse>("/api/v1/discovery/samples", { method: "GET" }, 8000);
+  },
+
+  /**
+   * Inspect Uploaded Dataset: profile a novel CSV/Parquet file dynamically on the fly.
+   */
+  async inspectDataset(file: File): Promise<import("./types").DatasetProfile> {
+    const formData = new FormData();
+    formData.append("file", file);
+    const url = `${API_BASE_URL}/api/v1/discovery/inspect`;
+    const response = await fetch(url, {
+      method: "POST",
+      body: formData,
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ detail: response.statusText }));
+      throw new ApiError(err.detail || "Failed to inspect dataset", response.status);
+    }
+    return response.json();
   },
 };

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Sprout, LayoutDashboard, Calculator, LineChart, BookOpen, Menu, X } from "lucide-react";
+import { Sprout, LayoutDashboard, Calculator, LineChart, BookOpen, Database, Menu, X } from "lucide-react";
 import { ApiStatusBadge } from "./ApiStatusBadge";
 
 export function Navbar() {
@@ -13,6 +13,7 @@ export function Navbar() {
   const navLinks = [
     { href: "/", label: "Overview", icon: <LayoutDashboard className="w-4 h-4" /> },
     { href: "/predict", label: "Yield Studio", icon: <Calculator className="w-4 h-4" /> },
+    { href: "/discovery", label: "Dataset Discovery", icon: <Database className="w-4 h-4" /> },
     { href: "/insights", label: "Model Insights", icon: <LineChart className="w-4 h-4" /> },
     { href: "/methodology", label: "Methodology", icon: <BookOpen className="w-4 h-4" /> },
   ];

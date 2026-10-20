@@ -29,7 +29,7 @@ def predict_crop_yield(request: PredictionRequest) -> PredictionResponse:
 
     return PredictionResponse(
         crop=result["crop"],
-        state=settings.TARGET_STATE,
+        state=request.state,
         district=result["district"],
         season=result["season"],
         year=request.year,
@@ -39,6 +39,11 @@ def predict_crop_yield(request: PredictionRequest) -> PredictionResponse:
         model_name=result["model_name"],
         model_strategy=result["model_strategy"],
         model_version=settings.VERSION,
+        prediction_policy=result.get("prediction_policy", "conservative"),
+        coverage_status=result.get("coverage_status", "fully_covered"),
+        is_out_of_distribution=result.get("is_out_of_distribution", False),
+        out_of_distribution_features=result.get("out_of_distribution_features", []),
+        qualitative_label=result.get("qualitative_label"),
         prediction_timing="end_of_season_estimate",
         timing_description=(
             f"End-of-season yield estimate using observed {result['season']} seasonal weather. "
@@ -49,6 +54,8 @@ def predict_crop_yield(request: PredictionRequest) -> PredictionResponse:
         prediction_interval=None,
         feature_contributions=None,
         global_feature_importance=model_service.feature_importance[:5] if model_service.feature_importance else None,
+        explanation=result.get("explanation"),
+        uncertainty_note=result.get("uncertainty_note"),
         limitations=result.get("limitations", []),
         request_id=request_id,
     )

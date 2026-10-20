@@ -1,4 +1,5 @@
 import math
+from enum import Enum
 from typing import Optional, Dict, List, Any
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -169,6 +170,13 @@ class SeasonalWeather(BaseModel):
         return min_val
 
 
+class PredictionPolicy(str, Enum):
+    """Validation policy governing prediction requests."""
+
+    CONSERVATIVE = "conservative"  # Restricts to verified/training combinations
+    EXPLORATORY = "exploratory"    # Permits unseen categories and warns on OOD features
+
+
 class PredictionRequest(BaseModel):
     """Input payload for crop yield prediction across supported crops in Maharashtra."""
 
@@ -179,20 +187,17 @@ class PredictionRequest(BaseModel):
     )
     state: str = Field(
         default="Maharashtra",
-        description="Indian State. Only 'Maharashtra' is supported.",
+        description="Indian State.",
         json_schema_extra={"example": "Maharashtra"},
     )
     district: str = Field(
         ...,
-        description=(
-            "District in Maharashtra with verified SoilGrids profile. "
-            "Supported districts: Ahmednagar, Akola, Amravati, Aurangabad, Beed, Bhandara, Buldhana."
-        ),
+        description="District or administrative region.",
         json_schema_extra={"example": "Akola"},
     )
     season: str = Field(
         default="Kharif",
-        description="Agricultural growing season. 'Kharif' (Soybean, Rice, Cotton, Maize, Groundnut) or 'Rabi' (Wheat, Chickpea).",
+        description="Agricultural growing season (e.g. 'Kharif', 'Rabi', 'Summer').",
         json_schema_extra={"example": "Kharif"},
     )
     year: int = Field(
@@ -204,12 +209,21 @@ class PredictionRequest(BaseModel):
     )
     model_strategy: Optional[str] = Field(
         default=None,
-        description="Optional model routing strategy: 'legacy_soybean' (single-crop) or 'shared_multicrop' (universal). If omitted, automatically routed.",
+        description="Optional model routing strategy: 'legacy_soybean', 'shared_multicrop', or 'adaptive'.",
         json_schema_extra={"example": "shared_multicrop"},
+    )
+    prediction_policy: str = Field(
+        default="conservative",
+        description="Prediction policy: 'conservative' (strict training coverage) or 'exploratory' (permits novel categories with warnings).",
+        json_schema_extra={"example": "conservative"},
     )
 
     soil: SoilProperties
     weather: SeasonalWeather
+    custom_features: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Optional dynamic feature key-values for novel or newly discovered attributes.",
+    )
 
 
 class PredictionResponse(BaseModel):
@@ -238,6 +252,26 @@ class PredictionResponse(BaseModel):
         description="Active model architecture strategy used for this inference.",
     )
     model_version: str
+    prediction_policy: str = Field(
+        default="conservative",
+        description="Active prediction policy used for request evaluation ('conservative' or 'exploratory').",
+    )
+    coverage_status: str = Field(
+        default="fully_covered",
+        description="Coverage classification: 'fully_covered', 'sparse_coverage', 'out_of_distribution_category', or 'out_of_distribution_numeric'.",
+    )
+    is_out_of_distribution: bool = Field(
+        default=False,
+        description="True if one or more features exceed the empirical training distribution.",
+    )
+    out_of_distribution_features: List[str] = Field(
+        default_factory=list,
+        description="List of feature names that exceeded the training distribution boundaries.",
+    )
+    qualitative_label: Optional[str] = Field(
+        default=None,
+        description="Estimated qualitative category (e.g. Low, Moderate, High) derived dynamically from target distribution quantiles.",
+    )
     prediction_timing: str = Field(
         default="end_of_season_estimate",
         description="Temporal availability disclosure.",
@@ -264,6 +298,14 @@ class PredictionResponse(BaseModel):
     global_feature_importance: Optional[List[Dict[str, Any]]] = Field(
         default=None,
         description="Global permutation feature importance from validation evaluation.",
+    )
+    explanation: Optional[str] = Field(
+        default=None,
+        description="Human-readable transparent explanation of how the prediction was computed.",
+    )
+    uncertainty_note: Optional[str] = Field(
+        default="Calibrated statistical prediction intervals are not available for this point estimate; estimate is a statistical expected value.",
+        description="Statement regarding uncertainty calibration.",
     )
     limitations: List[str] = Field(
         default_factory=list,
@@ -310,3 +352,39 @@ class ModelMetadataResponse(BaseModel):
         default=None,
         description="Phase 4 multi-crop temporal and spatial benchmark evaluation results.",
     )
+
+
+class DynamicCategoriesResponse(BaseModel):
+    """Dynamically discovered categorical dimensions and observed combinations."""
+
+    status: str
+    dataset_name: Optional[str] = None
+    categories: Dict[str, List[str]] = Field(default_factory=dict)
+    observed_combinations: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+class DynamicPresetsResponse(BaseModel):
+    """Collection of authentic sample presets generated from data."""
+
+    presets: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+class RetrainRequest(BaseModel):
+    """Configuration payload for initiating adaptive model retraining."""
+
+    dataset_name: Optional[str] = Field(default=None, description="Dataset name to train on.")
+    target_col: Optional[str] = Field(default=None, description="Explicit target column override.")
+    feature_exclusions: Optional[List[str]] = Field(default=None, description="Columns to omit from feature inputs.")
+    model_version: str = Field(default="3.0.0", description="Version string for the new model artifact.")
+
+
+class RetrainResponse(BaseModel):
+    """Output summary of adaptive model selection, validation, and serialization."""
+
+    status: str
+    model_version: str
+    selected_algorithm: str
+    artifact_path: str
+    metadata_path: str
+    schema_path: str
+    metadata: Dict[str, Any]

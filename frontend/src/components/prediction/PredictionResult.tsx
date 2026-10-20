@@ -55,9 +55,38 @@ export function PredictionResult({
               <Badge variant="zinc" size="md">
                 Model: {result.model_name} (v{result.model_version})
               </Badge>
-              {result.model_strategy && (
-                <Badge variant={result.model_strategy.includes("multicrop") ? "purple" : "blue"} size="md">
-                  Strategy: {result.model_strategy.replace(/_/g, " ")}
+              {result.prediction_policy && (
+                <Badge
+                  variant={result.prediction_policy === "exploratory" ? "amber" : "emerald"}
+                  size="md"
+                >
+                  Policy: {result.prediction_policy}
+                </Badge>
+              )}
+              {result.coverage_status && (
+                <Badge
+                  variant={
+                    result.coverage_status.includes("out_of_distribution")
+                      ? "amber"
+                      : "blue"
+                  }
+                  size="md"
+                >
+                  Coverage: {result.coverage_status.replace(/_/g, " ")}
+                </Badge>
+              )}
+              {result.qualitative_label && (
+                <Badge
+                  variant={
+                    result.qualitative_label.toLowerCase().includes("high")
+                      ? "emerald"
+                      : result.qualitative_label.toLowerCase().includes("moderate")
+                      ? "blue"
+                      : "zinc"
+                  }
+                  size="md"
+                >
+                  {result.qualitative_label}
                 </Badge>
               )}
             </div>
@@ -66,7 +95,7 @@ export function PredictionResult({
             </h2>
             <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1 max-w-xl">
               Calculated using observed {result.season} seasonal agroclimatology and
-              ISRIC SoilGrids 0–30 cm pedological characteristics for {result.district} district.
+              pedological characteristics for {result.district} district.
             </p>
           </div>
 
@@ -118,7 +147,7 @@ export function PredictionResult({
           <div className="flex items-center gap-2.5">
             <Sprout className="w-4 h-4 text-emerald-600 shrink-0" />
             <div>
-              <span className="text-xs text-zinc-400 block">Crop Variety Focus</span>
+              <span className="text-xs text-zinc-400 block">Crop Focus</span>
               <span className="font-semibold text-zinc-800 dark:text-zinc-200">
                 {result.crop}
               </span>
@@ -137,15 +166,57 @@ export function PredictionResult({
         </div>
       </Card>
 
+      {/* Out-of-Distribution Warning Card */}
+      {result.is_out_of_distribution && (
+        <Card className="bg-amber-50/70 dark:bg-amber-950/30 border-amber-300 dark:border-amber-800 p-5">
+          <div className="flex items-start gap-3">
+            <ShieldAlert className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <h4 className="text-sm font-bold text-amber-950 dark:text-amber-200">
+                Data Distribution Warning: Out-of-Distribution Covariates Detected
+              </h4>
+              <p className="text-xs text-amber-900/90 dark:text-amber-300/90 leading-relaxed">
+                The input data contains features that fall outside the empirical training data distribution:{" "}
+                <strong className="font-mono text-amber-950 dark:text-amber-100">
+                  {result.out_of_distribution_features && result.out_of_distribution_features.length > 0
+                    ? result.out_of_distribution_features.join(", ")
+                    : result.coverage_status}
+                </strong>
+                . Machine learning predictions for inputs with covariate shift carry higher statistical extrapolation uncertainty.
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Dynamic Data-Driven Explanation */}
+      {result.explanation && (
+        <Card className="bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/60 p-5">
+          <div className="space-y-1.5">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-900 dark:text-emerald-300">
+              Dynamic Prediction Context & Feature Influences
+            </h4>
+            <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">
+              {result.explanation}
+            </p>
+            {result.uncertainty_note && (
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 italic pt-1">
+                {result.uncertainty_note}
+              </p>
+            )}
+          </div>
+        </Card>
+      )}
+
       {/* 2. Timing Disclosure & Methodology Context */}
-      <Card className="bg-amber-50/40 dark:bg-amber-950/20 border-amber-200/80 dark:border-amber-900/60 p-5">
+      <Card className="bg-zinc-50 dark:bg-zinc-900/60 border-zinc-200 dark:border-zinc-800 p-5">
         <div className="flex items-start gap-3">
-          <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <Clock className="w-5 h-5 text-zinc-500 shrink-0 mt-0.5" />
           <div className="space-y-1">
-            <h4 className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+            <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
               Important Scientific Notice: Prediction vs. Historical Reality
             </h4>
-            <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
+            <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
               {result.timing_description} Historical model estimates are retrospective statistical inferences
               based on agroclimatic and pedological covariates, not guaranteed actual field harvest yields.
               Observed historical yields remain the ground truth for agronomic accounting.

@@ -1,7 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
-import { PredictionRequest, PredictionResponse } from "@/lib/types";
+import React, { useState, useEffect } from "react";
+import {
+  PredictionRequest,
+  PredictionResponse,
+  PredictionPolicy,
+  DynamicPresetSample,
+  CategoryCombination,
+} from "@/lib/types";
 import {
   SUPPORTED_DISTRICTS,
   SUPPORTED_CROPS,
@@ -24,7 +30,9 @@ import {
   HelpCircle,
   Calculator,
   Cpu,
-  Info,
+  ShieldCheck,
+  Compass,
+  Database,
 } from "lucide-react";
 
 interface PredictionFormProps {
@@ -38,12 +46,14 @@ export function PredictionForm({
   isLoading,
   setIsLoading,
 }: PredictionFormProps) {
+  const [policy, setPolicy] = useState<PredictionPolicy>("conservative");
   const [formData, setFormData] = useState<PredictionRequest>({
     crop: "Soybean",
     state: "Maharashtra",
     district: "Akola",
     season: "Kharif",
     year: 2024,
+    prediction_policy: "conservative",
     model_strategy: "legacy_soybean",
     soil: {
       soil_ph: 7.4,
@@ -65,9 +75,91 @@ export function PredictionForm({
     },
   });
 
+  // Dynamic discovery states
+  const [discoveredCrops, setDiscoveredCrops] = useState<string[]>([]);
+  const [discoveredDistricts, setDiscoveredDistricts] = useState<string[]>([]);
+  const [observedCombinations, setObservedCombinations] = useState<CategoryCombination[]>([]);
+  const [dynamicPresets, setDynamicPresets] = useState<DynamicPresetSample[]>([]);
+  const [isLoadingDiscovery, setIsLoadingDiscovery] = useState<boolean>(true);
+  const [discoverySource, setDiscoverySource] = useState<string>("fallback");
+
+  // Custom freeform category states for exploratory mode
+  const [isCustomCrop, setIsCustomCrop] = useState<boolean>(false);
+  const [customCropValue, setCustomCropValue] = useState<string>("");
+  const [isCustomDistrict, setIsCustomDistrict] = useState<boolean>(false);
+  const [customDistrictValue, setCustomDistrictValue] = useState<string>("");
+
   const [autoSilt, setAutoSilt] = useState<boolean>(true);
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [apiError, setApiError] = useState<string | null>(null);
+
+  // Fetch dynamic categories and empirical presets on component mount
+  useEffect(() => {
+    let isMounted = true;
+    async function loadDynamicCatalog() {
+      try {
+        const [catRes, sampleRes] = await Promise.all([
+          api.getDiscoveredCategories().catch(() => null),
+          api.getDynamicPresets().catch(() => null),
+        ]);
+
+        if (!isMounted) return;
+
+        if (catRes && catRes.categories) {
+          if (catRes.categories.crop && catRes.categories.crop.length > 0) {
+            setDiscoveredCrops(catRes.categories.crop);
+          }
+          if (catRes.categories.district && catRes.categories.district.length > 0) {
+            setDiscoveredDistricts(catRes.categories.district);
+          }
+          if (catRes.observed_combinations) {
+            setObservedCombinations(catRes.observed_combinations);
+          }
+          setDiscoverySource("backend_discovery");
+        }
+
+        if (sampleRes && sampleRes.presets && sampleRes.presets.length > 0) {
+          setDynamicPresets(sampleRes.presets);
+        }
+      } catch {
+        // Fallback to static registry defaults
+      } finally {
+        if (isMounted) setIsLoadingDiscovery(false);
+      }
+    }
+    loadDynamicCatalog();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Update policy and sync with formData
+  const handlePolicyChange = (newPolicy: PredictionPolicy) => {
+    setPolicy(newPolicy);
+    setFormData((prev) => ({ ...prev, prediction_policy: newPolicy }));
+    setErrors({});
+  };
+
+  // Derive active crop and district options
+  const activeCropsList = discoveredCrops.length > 0 ? discoveredCrops : SUPPORTED_CROPS.map((c) => c.label);
+  const activeDistrictsList = discoveredDistricts.length > 0 ? discoveredDistricts : Array.from(SUPPORTED_DISTRICTS);
+
+  // Derive allowed seasons for currently selected crop dynamically
+  const availableSeasons: string[] = React.useMemo(() => {
+    const selected = (formData.crop || "").trim().toLowerCase();
+    const combos = observedCombinations.filter(
+      (c) =>
+        (c.feature_a === "crop" && c.value_a.toLowerCase() === selected && c.feature_b === "season") ||
+        (c.feature_b === "crop" && c.value_b.toLowerCase() === selected && c.feature_a === "season")
+    );
+    if (combos.length > 0) {
+      const derived = Array.from(new Set(combos.map((c) => (c.feature_a === "season" ? c.value_a : c.value_b))));
+      if (derived.length > 0) return derived;
+    }
+    // Default fallback seasons
+    if (selected === "wheat" || selected === "chickpea") return ["Rabi"];
+    return ["Kharif", "Rabi"];
+  }, [formData.crop, observedCombinations]);
 
   // Field change handlers
   const handleScopeChange = (field: keyof PredictionRequest, value: string | number) => {
@@ -75,14 +167,14 @@ export function PredictionForm({
       const next = { ...prev, [field]: value };
       if (field === "crop") {
         const cropStr = String(value).toLowerCase();
-        const cropInfo = SUPPORTED_CROPS.find((c) => c.id === cropStr || c.label.toLowerCase() === cropStr);
-        if (cropInfo) {
-          next.season = cropInfo.defaultSeason;
-          if (cropInfo.id === "soybean") {
-            next.model_strategy = prev.model_strategy || "legacy_soybean";
-          } else {
-            next.model_strategy = "shared_multicrop";
-          }
+        if (cropStr === "soybean") {
+          next.model_strategy = prev.model_strategy || "legacy_soybean";
+        } else {
+          next.model_strategy = "shared_multicrop";
+        }
+        // Auto-select first compatible season if current season not in available list
+        if (!availableSeasons.includes(next.season || "")) {
+          next.season = availableSeasons[0] || "Kharif";
         }
       }
       return next;
@@ -137,28 +229,89 @@ export function PredictionForm({
   const loadPreset = (presetId: string) => {
     const preset = ILLUSTRATIVE_PRESETS.find((p) => p.id === presetId);
     if (preset) {
-      setFormData(preset.data);
+      setFormData({
+        ...preset.data,
+        prediction_policy: policy,
+      });
+      setIsCustomCrop(false);
+      setIsCustomDistrict(false);
       setErrors({});
       setApiError(null);
     }
   };
 
-  const resetForm = () => {
-    setFormData(ILLUSTRATIVE_PRESETS[0].data);
+  const loadDynamicSample = (sample: DynamicPresetSample) => {
+    const vals = sample.sample_values;
+    setFormData((prev) => ({
+      ...prev,
+      crop: String(vals.crop || prev.crop),
+      district: String(vals.district || prev.district),
+      season: String(vals.season || prev.season || "Kharif"),
+      year: Number(vals.year || prev.year),
+      prediction_policy: policy,
+      soil: {
+        soil_ph: Number(vals.soil_ph ?? prev.soil.soil_ph),
+        organic_carbon_pct: Number(vals.organic_carbon_pct ?? prev.soil.organic_carbon_pct),
+        clay_pct: Number(vals.clay_pct ?? prev.soil.clay_pct),
+        sand_pct: Number(vals.sand_pct ?? prev.soil.sand_pct),
+        silt_pct: Number(vals.silt_pct ?? prev.soil.silt_pct),
+        bulk_density_g_cm3: Number(vals.bulk_density_g_cm3 ?? prev.soil.bulk_density_g_cm3),
+        cation_exchange_capacity_cmol_kg: Number(
+          vals.cation_exchange_capacity_cmol_kg ?? prev.soil.cation_exchange_capacity_cmol_kg
+        ),
+      },
+      weather: {
+        cumulative_rainfall_mm: Number(vals.cumulative_rainfall_mm ?? prev.weather.cumulative_rainfall_mm),
+        mean_temp_max_c: Number(vals.mean_temp_max_c ?? prev.weather.mean_temp_max_c),
+        mean_temp_min_c: Number(vals.mean_temp_min_c ?? prev.weather.mean_temp_min_c),
+        mean_solar_radiation_mj_m2: Number(
+          vals.mean_solar_radiation_mj_m2 ?? prev.weather.mean_solar_radiation_mj_m2
+        ),
+        mean_relative_humidity_pct: Number(
+          vals.mean_relative_humidity_pct ?? prev.weather.mean_relative_humidity_pct
+        ),
+        consecutive_dry_days_max: Number(
+          vals.consecutive_dry_days_max ?? prev.weather.consecutive_dry_days_max
+        ),
+        heat_stress_days: Number(vals.heat_stress_days ?? prev.weather.heat_stress_days),
+      },
+    }));
+    setIsCustomCrop(false);
+    setIsCustomDistrict(false);
     setErrors({});
     setApiError(null);
   };
 
-  const currentCropInfo = SUPPORTED_CROPS.find(
-    (c) => c.label.toLowerCase() === (formData.crop || "").toLowerCase() || c.id === (formData.crop || "").toLowerCase()
-  ) || SUPPORTED_CROPS[0];
+  const resetForm = () => {
+    setFormData({
+      ...ILLUSTRATIVE_PRESETS[0].data,
+      prediction_policy: policy,
+    });
+    setIsCustomCrop(false);
+    setIsCustomDistrict(false);
+    setErrors({});
+    setApiError(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setApiError(null);
 
-    // 1. Client-side validation
-    const validationErrors = validatePredictionRequest(formData);
+    // Apply custom crop or district if entered
+    const submissionData: PredictionRequest = {
+      ...formData,
+      crop: isCustomCrop && customCropValue.trim() ? customCropValue.trim() : formData.crop,
+      district: isCustomDistrict && customDistrictValue.trim() ? customDistrictValue.trim() : formData.district,
+      prediction_policy: policy,
+    };
+
+    // 1. Client-side dynamic validation
+    const validationErrors = validatePredictionRequest(submissionData, {
+      supportedDistricts: activeDistrictsList,
+      supportedCrops: activeCropsList.map((label) => ({ id: label.toLowerCase(), label })),
+      policy,
+    });
+
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       const firstErrorKey = Object.keys(validationErrors)[0];
@@ -173,8 +326,8 @@ export function PredictionForm({
     // 2. Submit to backend API
     setIsLoading(true);
     try {
-      const response = await api.predictCropYield(formData);
-      onSuccess(response, formData);
+      const response = await api.predictCropYield(submissionData);
+      onSuccess(response, submissionData);
     } catch (err: unknown) {
       if (err instanceof ApiError) {
         setApiError(err.message);
@@ -188,30 +341,97 @@ export function PredictionForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8" noValidate>
-      {/* Illustrative Presets Selector */}
+      {/* Policy Selector Banner */}
+      <div className="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <Compass className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+            <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+              Prediction Governance Policy
+            </h3>
+            <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-semibold uppercase tracking-wider">
+              {policy}
+            </span>
+          </div>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-xl">
+            {policy === "conservative"
+              ? "Conservative Mode: strictly restricts inference to combinations meeting verified SoilGrids baseline requirements and training data distributions."
+              : "Exploratory Mode: enables inference for novel crops, unverified districts (e.g., Thane, Kalyan, Nagpur), and out-of-distribution values with explicit coverage disclaimers."}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 self-stretch md:self-auto">
+          <button
+            type="button"
+            onClick={() => handlePolicyChange("conservative")}
+            className={`flex-1 md:flex-none flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              policy === "conservative"
+                ? "bg-white dark:bg-zinc-900 text-emerald-800 dark:text-emerald-300 shadow-xs"
+                : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            Conservative
+          </button>
+          <button
+            type="button"
+            onClick={() => handlePolicyChange("exploratory")}
+            className={`flex-1 md:flex-none flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              policy === "exploratory"
+                ? "bg-white dark:bg-zinc-900 text-amber-700 dark:text-amber-300 shadow-xs"
+                : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
+            }`}
+          >
+            <Compass className="w-3.5 h-3.5" />
+            Exploratory
+          </button>
+        </div>
+      </div>
+
+      {/* Discovered Presets & Real Dataset Samples */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/60">
         <div className="flex items-center gap-2.5">
           <Sparkles className="w-5 h-5 text-emerald-700 dark:text-emerald-400 shrink-0" />
           <div>
-            <h4 className="text-sm font-semibold text-emerald-950 dark:text-emerald-200">
-              Illustrative Multi-Crop Presets (Demo Only)
-            </h4>
+            <div className="flex items-center gap-2">
+              <h4 className="text-sm font-semibold text-emerald-950 dark:text-emerald-200">
+                Data-Driven Scenario Presets
+              </h4>
+              {discoverySource === "backend_discovery" && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-200/70 dark:bg-emerald-900/60 text-emerald-900 dark:text-emerald-200 font-mono">
+                  Live Discovered
+                </span>
+              )}
+            </div>
             <p className="text-xs text-emerald-800/80 dark:text-emerald-400/80">
-              Populate form with validated example figures across supported crops for interactive testing.
+              Sampled directly from authentic dataset observations across verified agricultural seasons.
             </p>
           </div>
         </div>
+
         <div className="flex items-center flex-wrap gap-2 w-full sm:w-auto">
-          {ILLUSTRATIVE_PRESETS.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => loadPreset(p.id)}
-              className="px-2.5 py-1 text-xs font-medium rounded-lg bg-white dark:bg-zinc-900 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/40 text-emerald-900 dark:text-emerald-200 transition-colors shadow-2xs"
-            >
-              {p.crop} ({p.district})
-            </button>
-          ))}
+          {dynamicPresets.length > 0
+            ? dynamicPresets.map((s, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => loadDynamicSample(s)}
+                  className="px-2.5 py-1 text-xs font-medium rounded-lg bg-white dark:bg-zinc-900 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/40 text-emerald-900 dark:text-emerald-200 transition-colors shadow-2xs"
+                  title={s.description}
+                >
+                  {s.name}
+                </button>
+              ))
+            : ILLUSTRATIVE_PRESETS.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => loadPreset(p.id)}
+                  className="px-2.5 py-1 text-xs font-medium rounded-lg bg-white dark:bg-zinc-900 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/40 text-emerald-900 dark:text-emerald-200 transition-colors shadow-2xs"
+                >
+                  {p.crop} ({p.district})
+                </button>
+              ))}
           <button
             type="button"
             onClick={resetForm}
@@ -237,32 +457,63 @@ export function PredictionForm({
       <Card>
         <CardHeader
           title="1. Crop Selection & Geographic Scope"
-          subtitle="Select supported crop and verified Maharashtra district with SoilGrids baseline profile."
+          subtitle={
+            isLoadingDiscovery
+              ? "Discovering valid crops and geographic boundaries from backend schema engine..."
+              : discoverySource === "backend_discovery"
+              ? `Discovered ${activeCropsList.length} crops and ${activeDistrictsList.length} regions dynamically from dataset schema.`
+              : "Select supported crop and verified Maharashtra district with SoilGrids baseline profile."
+          }
           badge={<MapPin className="w-4 h-4 text-emerald-600" />}
         />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {/* Crop Selector */}
+          {/* Target Crop Selector */}
           <div>
-            <label
-              htmlFor="crop"
-              className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1.5"
-            >
-              Target Crop <span className="text-rose-500">*</span>
-            </label>
-            <select
-              id="crop"
-              value={formData.crop}
-              onChange={(e) => handleScopeChange("crop", e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
-            >
-              {SUPPORTED_CROPS.map((c) => (
-                <option key={c.id} value={c.label}>
-                  {c.label} ({c.defaultSeason})
-                </option>
-              ))}
-            </select>
+            <div className="flex items-center justify-between mb-1.5">
+              <label
+                htmlFor="crop"
+                className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300"
+              >
+                Target Crop <span className="text-rose-500">*</span>
+              </label>
+              {policy === "exploratory" && (
+                <button
+                  type="button"
+                  onClick={() => setIsCustomCrop(!isCustomCrop)}
+                  className="text-[11px] text-emerald-700 dark:text-emerald-400 hover:underline"
+                >
+                  {isCustomCrop ? "Select existing" : "+ Novel crop"}
+                </button>
+              )}
+            </div>
+
+            {isCustomCrop ? (
+              <input
+                id="crop"
+                type="text"
+                placeholder="e.g. Sorghum, Mustard"
+                value={customCropValue}
+                onChange={(e) => setCustomCropValue(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50/40 dark:bg-amber-950/20 text-zinc-900 dark:text-zinc-100 text-sm font-medium focus:ring-2 focus:ring-amber-500 outline-none"
+              />
+            ) : (
+              <select
+                id="crop"
+                value={formData.crop}
+                onChange={(e) => handleScopeChange("crop", e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+              >
+                {activeCropsList.map((cropName) => (
+                  <option key={cropName} value={cropName}>
+                    {cropName}
+                  </option>
+                ))}
+              </select>
+            )}
             <span className="text-[11px] text-zinc-500 mt-1 block">
-              7 verified crops in registry
+              {isCustomCrop
+                ? "Novel crop evaluated via exploratory feature routing"
+                : `${activeCropsList.length} dynamically discovered crops`}
             </span>
             {errors.crop && (
               <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{errors.crop}</p>
@@ -271,26 +522,51 @@ export function PredictionForm({
 
           {/* District Selection */}
           <div>
-            <label
-              htmlFor="district"
-              className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1.5"
-            >
-              District <span className="text-rose-500">*</span>
-            </label>
-            <select
-              id="district"
-              value={formData.district}
-              onChange={(e) => handleScopeChange("district", e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
-            >
-              {SUPPORTED_DISTRICTS.map((dist) => (
-                <option key={dist} value={dist}>
-                  {dist}
-                </option>
-              ))}
-            </select>
+            <div className="flex items-center justify-between mb-1.5">
+              <label
+                htmlFor="district"
+                className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300"
+              >
+                District <span className="text-rose-500">*</span>
+              </label>
+              {policy === "exploratory" && (
+                <button
+                  type="button"
+                  onClick={() => setIsCustomDistrict(!isCustomDistrict)}
+                  className="text-[11px] text-emerald-700 dark:text-emerald-400 hover:underline"
+                >
+                  {isCustomDistrict ? "Select existing" : "+ Novel district"}
+                </button>
+              )}
+            </div>
+
+            {isCustomDistrict ? (
+              <input
+                id="district"
+                type="text"
+                placeholder="e.g. Nagpur, Thane"
+                value={customDistrictValue}
+                onChange={(e) => setCustomDistrictValue(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50/40 dark:bg-amber-950/20 text-zinc-900 dark:text-zinc-100 text-sm font-medium focus:ring-2 focus:ring-amber-500 outline-none"
+              />
+            ) : (
+              <select
+                id="district"
+                value={formData.district}
+                onChange={(e) => handleScopeChange("district", e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+              >
+                {activeDistrictsList.map((dist) => (
+                  <option key={dist} value={dist}>
+                    {dist}
+                  </option>
+                ))}
+              </select>
+            )}
             <span className="text-[11px] text-zinc-500 mt-1 block">
-              7 districts with SoilGrids profiles
+              {isCustomDistrict
+                ? "Unverified district tested under exploratory policy"
+                : `${activeDistrictsList.length} districts in active catalog`}
             </span>
             {errors.district && (
               <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{errors.district}</p>
@@ -311,14 +587,14 @@ export function PredictionForm({
               onChange={(e) => handleScopeChange("season", e.target.value)}
               className="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
             >
-              {currentCropInfo.allowedSeasons.map((s) => (
+              {availableSeasons.map((s) => (
                 <option key={s} value={s}>
                   {s}
                 </option>
               ))}
             </select>
             <span className="text-[11px] text-zinc-500 mt-1 block">
-              Aligned with crop cycle
+              Discovered for {formData.crop || "selected crop"}
             </span>
             {errors.season && (
               <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{errors.season}</p>
@@ -349,7 +625,7 @@ export function PredictionForm({
           </div>
         </div>
 
-        {/* Model Strategy & Coverage Notice */}
+        {/* Model Strategy & Governance Status Strip */}
         <div className="mt-5 pt-5 border-t border-zinc-200 dark:border-zinc-800 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/60">
             <div className="flex items-center gap-2 mb-1.5">
@@ -367,10 +643,10 @@ export function PredictionForm({
               {formData.crop?.toLowerCase() === "soybean" ? (
                 <>
                   <option value="legacy_soybean">Legacy Production Soybean Pipeline (Trained 1990–2010)</option>
-                  <option value="shared_multicrop">Phase 4 Universal Multi-Crop Random Forest (Trained 1990–2010)</option>
+                  <option value="shared_multicrop">Phase 4/6 Universal Multi-Crop Random Forest (Trained 1990–2010)</option>
                 </>
               ) : (
-                <option value="shared_multicrop">Phase 4 Universal Multi-Crop Random Forest</option>
+                <option value="shared_multicrop">Phase 4/6 Universal Multi-Crop Random Forest</option>
               )}
             </select>
             <p className="text-[11px] text-zinc-500 mt-1.5">
@@ -380,10 +656,10 @@ export function PredictionForm({
             </p>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/50 flex items-start gap-2.5">
-            <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-            <div className="text-xs text-amber-900 dark:text-amber-200 leading-relaxed">
-              <strong>Coverage Boundary:</strong> Only 7 districts in Maharashtra have verified ISRIC SoilGrids 2.0 pedological profiles. Other districts (such as Thane / Kalyan) are not supported.
+          <div className="p-3.5 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-900/50 flex items-start gap-2.5">
+            <Database className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+            <div className="text-xs text-emerald-950 dark:text-emerald-200 leading-relaxed">
+              <strong>Dynamic Schema Engine:</strong> Categories and feature bindings are inferred directly from dataset profiles. Adding rows for new crops or regions will automatically expand this catalog without code modifications.
             </div>
           </div>
         </div>

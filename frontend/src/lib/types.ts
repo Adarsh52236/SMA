@@ -31,6 +31,8 @@ export interface SeasonalWeather {
   heat_stress_days: number;
 }
 
+export type PredictionPolicy = "conservative" | "exploratory";
+
 export interface PredictionRequest {
   crop?: string;
   state?: string;
@@ -38,6 +40,8 @@ export interface PredictionRequest {
   season?: string;
   year: number;
   model_strategy?: "legacy_soybean" | "shared_multicrop" | null;
+  prediction_policy?: PredictionPolicy;
+  custom_features?: Record<string, string | number>;
   soil: SoilProperties;
   weather: SeasonalWeather;
 }
@@ -60,6 +64,13 @@ export interface PredictionResponse {
   model_name: string;
   model_version: string;
   model_strategy?: string | null;
+  prediction_policy?: string | null;
+  coverage_status?: string | null;
+  is_out_of_distribution?: boolean;
+  out_of_distribution_features?: string[];
+  qualitative_label?: string | null;
+  explanation?: string | null;
+  uncertainty_note?: string | null;
   prediction_timing: string;
   timing_description: string;
   prediction_interval: Record<string, number> | null;
@@ -68,6 +79,104 @@ export interface PredictionResponse {
   limitations: string[];
   evaluation_summary?: Record<string, unknown> | null;
   request_id?: string | null;
+}
+
+export interface NumericStats {
+  min: number;
+  max: number;
+  mean: number;
+  std: number;
+  p25: number;
+  p50: number;
+  p75: number;
+  outlier_count_iqr: number;
+  zero_count: number;
+}
+
+export interface CategoricalStats {
+  cardinality: number;
+  top_categories: Record<string, number>;
+  rare_categories: string[];
+}
+
+export interface ColumnProfile {
+  name: string;
+  dtype: string;
+  null_count: number;
+  null_pct: number;
+  unique_count: number;
+  unique_pct: number;
+  is_constant: boolean;
+  inferred_role: string;
+  confidence_role: number;
+  inferred_units?: string | null;
+  description?: string | null;
+  numeric_stats?: NumericStats | null;
+  categorical_stats?: CategoricalStats | null;
+  is_leakage_risk: boolean;
+  leakage_reason?: string | null;
+}
+
+export interface CategoryCombination {
+  feature_a: string;
+  value_a: string;
+  feature_b: string;
+  value_b: string;
+  observation_count: number;
+  representation_status: "well_represented" | "sparse" | "insufficient";
+  mean_target_value?: number | null;
+}
+
+export interface DataQualityReport {
+  total_rows: number;
+  total_columns: number;
+  duplicate_rows: number;
+  duplicate_rows_pct: number;
+  constant_columns: string[];
+  high_null_columns: string[];
+  detected_leakage_columns: string[];
+  quality_score_pct: number;
+  warnings: string[];
+}
+
+export interface DynamicPresetSample {
+  name: string;
+  description: string;
+  sample_values: Record<string, string | number>;
+  observed_target?: number | null;
+  source_row_index?: number;
+}
+
+export interface DatasetProfile {
+  dataset_name: string;
+  file_format: string;
+  sha256_hash: string;
+  row_count: number;
+  col_count: number;
+  memory_bytes: number;
+  columns: Record<string, ColumnProfile>;
+  target_candidates: Array<{ name: string; score: number; rationale: string }>;
+  selected_target?: string | null;
+  target_is_ambiguous: boolean;
+  ambiguity_explanation?: string | null;
+  discovered_categories: Record<string, string[]>;
+  observed_combinations: CategoryCombination[];
+  quality_report: DataQualityReport;
+  dynamic_presets: DynamicPresetSample[];
+  human_readable_summary: string;
+}
+
+export interface DynamicCategoriesResponse {
+  status: string;
+  categories: Record<string, string[]>;
+  observed_combinations: CategoryCombination[];
+  source_dataset?: string | null;
+}
+
+export interface DynamicPresetsResponse {
+  status: string;
+  presets: DynamicPresetSample[];
+  count: number;
 }
 
 export interface SupportedFeatureMeta {

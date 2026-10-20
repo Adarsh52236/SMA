@@ -160,31 +160,58 @@ export function calculateSiltPercentage(clay: number, sand: number): number {
 
 export type ValidationErrors = Record<string, string>;
 
-export function validatePredictionRequest(data: PredictionRequest): ValidationErrors {
+export interface ValidationOptions {
+  supportedDistricts?: readonly string[] | string[];
+  supportedCrops?: readonly { id: string; label: string; defaultSeason?: string; allowedSeasons?: readonly string[] | string[] }[];
+  cropAllowedSeasons?: Record<string, string[]>;
+  policy?: "conservative" | "exploratory";
+}
+
+export function validatePredictionRequest(
+  data: PredictionRequest,
+  options?: ValidationOptions
+): ValidationErrors {
   const errors: ValidationErrors = {};
+  const policy = data.prediction_policy || options?.policy || "conservative";
+  const isExploratory = policy === "exploratory";
+
+  const activeDistricts = options?.supportedDistricts || SUPPORTED_DISTRICTS;
+  const activeCrops = options?.supportedCrops || SUPPORTED_CROPS;
 
   // District validation
-  if (!SUPPORTED_DISTRICTS.includes(data.district as SupportedDistrict)) {
-    errors.district = `District '${data.district}' is not supported. Supported: ${SUPPORTED_DISTRICTS.join(", ")}. Note that unverified regions (e.g., Thane, Kalyan) lack verified SoilGrids baseline profiles.`;
+  if (!data.district || data.district.trim() === "") {
+    errors.district = "District is required.";
+  } else if (!isExploratory) {
+    const isSupported = activeDistricts.some(
+      (d) => d.toLowerCase() === data.district.trim().toLowerCase()
+    );
+    if (!isSupported) {
+      errors.district = `District '${data.district}' is not supported. Supported: ${Array.from(activeDistricts).join(", ")}. Note that unverified regions (e.g., Thane, Kalyan) lack verified SoilGrids baseline profiles. Use exploratory policy to test unverified districts.`;
+    }
   }
 
   // Crop validation
   const cropRaw = data.crop || "Soybean";
   const cropNorm = cropRaw.trim().toLowerCase();
-  const matchedCrop = SUPPORTED_CROPS.find((c) => c.id === cropNorm || c.label.toLowerCase() === cropNorm);
-  if (!matchedCrop) {
-    errors.crop = `Crop '${cropRaw}' is not supported. Supported crops: ${SUPPORTED_CROPS.map((c) => c.label).join(", ")}.`;
+  const matchedCrop = activeCrops.find(
+    (c) => c.id.toLowerCase() === cropNorm || c.label.toLowerCase() === cropNorm
+  );
+
+  if (!isExploratory && !matchedCrop) {
+    errors.crop = `Crop '${cropRaw}' is not supported. Supported crops: ${activeCrops.map((c) => c.label).join(", ")}. Use exploratory policy to test novel crops.`;
   }
 
   // State validation
-  if (data.state && data.state.toLowerCase() !== "maharashtra") {
-    errors.state = "Only 'Maharashtra' is supported.";
+  if (!isExploratory && data.state && data.state.toLowerCase() !== "maharashtra") {
+    errors.state = "Only 'Maharashtra' is supported under conservative policy.";
   }
 
   // Season validation per crop
-  const season = data.season || (matchedCrop ? matchedCrop.defaultSeason : "Kharif");
-  if (matchedCrop) {
-    const allowed = CROP_ALLOWED_SEASONS[matchedCrop.id] || ["Kharif"];
+  if (!isExploratory && matchedCrop) {
+    const season = data.season || matchedCrop.defaultSeason || "Kharif";
+    const allowed = options?.cropAllowedSeasons?.[matchedCrop.id.toLowerCase()] ||
+      matchedCrop.allowedSeasons ||
+      CROP_ALLOWED_SEASONS[matchedCrop.id.toLowerCase()] || ["Kharif"];
     const seasonNorm = season.trim().charAt(0).toUpperCase() + season.trim().slice(1).toLowerCase();
     if (!allowed.includes(seasonNorm)) {
       errors.season = `Season '${season}' is not supported for ${matchedCrop.label}. Supported season(s): ${allowed.join(", ")}.`;

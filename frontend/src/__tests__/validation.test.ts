@@ -316,3 +316,69 @@ test("validatePredictionRequest rejects unknown crops like Barley or Sugarcane",
   assert.match(errors.crop, /Crop 'Barley' is not supported/);
 });
 
+test("validatePredictionRequest allows novel crop and district under exploratory policy", () => {
+  const exploratoryPayload = {
+    crop: "Sorghum",
+    state: "Maharashtra",
+    district: "Nagpur",
+    season: "Kharif",
+    year: 2024,
+    prediction_policy: "exploratory" as const,
+    soil: {
+      soil_ph: 7.4,
+      organic_carbon_pct: 0.65,
+      clay_pct: 45.0,
+      sand_pct: 20.0,
+      silt_pct: 35.0,
+      bulk_density_g_cm3: 1.25,
+      cation_exchange_capacity_cmol_kg: 38.0,
+    },
+    weather: {
+      cumulative_rainfall_mm: 850.5,
+      mean_temp_max_c: 31.8,
+      mean_temp_min_c: 22.4,
+      mean_solar_radiation_mj_m2: 18.6,
+      mean_relative_humidity_pct: 76.2,
+      consecutive_dry_days_max: 8,
+      heat_stress_days: 4,
+    },
+  };
+
+  const errors = validatePredictionRequest(exploratoryPayload);
+  assert.equal(Object.keys(errors).length, 0);
+});
+
+test("validatePredictionRequest supports dynamically supplied discovered categories", () => {
+  const dynamicPayload = {
+    crop: "Mustard",
+    state: "Maharashtra",
+    district: "Kolhapur",
+    season: "Rabi",
+    year: 2024,
+    soil: {
+      soil_ph: 7.4,
+      organic_carbon_pct: 0.65,
+      clay_pct: 45.0,
+      sand_pct: 20.0,
+      silt_pct: 35.0,
+      bulk_density_g_cm3: 1.25,
+      cation_exchange_capacity_cmol_kg: 38.0,
+    },
+    weather: {
+      cumulative_rainfall_mm: 80.0,
+      mean_temp_max_c: 26.0,
+      mean_temp_min_c: 14.0,
+      mean_solar_radiation_mj_m2: 17.5,
+      mean_relative_humidity_pct: 58.0,
+      consecutive_dry_days_max: 18,
+      heat_stress_days: 0,
+    },
+  };
+
+  const errors = validatePredictionRequest(dynamicPayload, {
+    supportedDistricts: ["Kolhapur", "Solapur"],
+    supportedCrops: [{ id: "mustard", label: "Mustard", defaultSeason: "Rabi", allowedSeasons: ["Rabi"] }],
+  });
+  assert.equal(Object.keys(errors).length, 0);
+});
+
