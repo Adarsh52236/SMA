@@ -5,10 +5,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node --experimental-strip-types --test src/__tests__/*.test.ts"
   },
   "dependencies": {
+    "lucide-react": "^1.60.0",
     "next": "16.4.2",
     "react": "19.3.0",
     "react-dom": "19.3.0"
