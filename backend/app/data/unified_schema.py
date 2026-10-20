@@ -200,6 +200,9 @@ def convert_yield_to_t_ha(value: float, from_unit: str) -> float:
     if value is None or math.isnan(value):
         raise ValueError("Cannot convert NaN yield value.")
 
+    if value < 0.0:
+        raise ValueError(f"Yield cannot be negative: {value}")
+
     normalized_unit = from_unit.strip().lower().replace(" ", "").replace("_", "")
 
     conversion_table = {

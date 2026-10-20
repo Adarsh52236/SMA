@@ -19,6 +19,7 @@ class WeatherAdapter:
     def __init__(self, raw_weather_dir: str):
         self.raw_weather_dir = raw_weather_dir
         self.source_id = "nasa_power_daily"
+        self._file_cache: Dict[str, dict] = {}
 
     def get_weather_measurement(
         self,
@@ -44,11 +45,15 @@ class WeatherAdapter:
         if not os.path.exists(cache_file):
             return None
 
-        try:
-            with open(cache_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-        except Exception:
-            return None
+        if cache_file in self._file_cache:
+            data = self._file_cache[cache_file]
+        else:
+            try:
+                with open(cache_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    self._file_cache[cache_file] = data
+            except Exception:
+                return None
 
         params = data.get("properties", {}).get("parameter", {})
         if not params:

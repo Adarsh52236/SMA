@@ -1,0 +1,177 @@
+{
+  "metadata": {
+    "generation_timestamp": "2026-10-20T11:37:21.242546+00:00",
+    "dataset_sha256": "50092b4060979d215d217317691b033c7edc6d0e25c46b309f774ab15f6115fa",
+    "target_crops": [
+      "soybean",
+      "rice",
+      "wheat",
+      "cotton",
+      "maize",
+      "chickpea",
+      "groundnut"
+    ],
+    "target_state": "Maharashtra",
+    "historical_year_range": [
+      1990,
+      2017
+    ],
+    "dataset_path": "C:\\Users\\adars\\OneDrive\\Documents\\PROJECTS\\SMA\\data\\processed\\crop_yield_multicrop.csv"
+  },
+  "overall_counts": {
+    "raw_records_read": 62054,
+    "raw_deduplicated_records": 31050,
+    "accepted_yield_records": 5068,
+    "fully_aligned_records": 1358,
+    "yield_and_weather_records": 2910,
+    "yield_only_records": 800,
+    "rejections": {
+      "out_of_year_range": 14352,
+      "filtered_crop": 3620,
+      "unregistered_crop": 7964
+    }
+  },
+  "per_crop_summary": {
+    "soybean": {
+      "crop_name": "Soybean",
+      "category": "oilseed",
+      "default_season": "Kharif",
+      "total_yield_observations": 724,
+      "weather_aligned_observations": 616,
+      "fully_aligned_observations": 196,
+      "districts_count": 26,
+      "fully_aligned_districts_count": 7,
+      "years_min": 1990,
+      "years_max": 2017,
+      "yield_t_ha_mean": 1.0385,
+      "yield_t_ha_std": 0.6573,
+      "yield_t_ha_min": 0.0,
+      "yield_t_ha_max": 3.8841,
+      "is_model_ready_for_phase_4": true
+    },
+    "rice": {
+      "crop_name": "Rice (Paddy)",
+      "category": "cereal",
+      "default_season": "Kharif",
+      "total_yield_observations": 724,
+      "weather_aligned_observations": 616,
+      "fully_aligned_observations": 196,
+      "districts_count": 26,
+      "fully_aligned_districts_count": 7,
+      "years_min": 1990,
+      "years_max": 2017,
+      "yield_t_ha_mean": 1.1105,
+      "yield_t_ha_std": 0.8174,
+      "yield_t_ha_min": 0.0,
+      "yield_t_ha_max": 3.4834,
+      "is_model_ready_for_phase_4": true
+    },
+    "wheat": {
+      "crop_name": "Wheat",
+      "category": "cereal",
+      "default_season": "Rabi",
+      "total_yield_observations": 724,
+      "weather_aligned_observations": 594,
+      "fully_aligned_observations": 189,
+      "districts_count": 26,
+      "fully_aligned_districts_count": 7,
+      "years_min": 1990,
+      "years_max": 2017,
+      "yield_t_ha_mean": 1.2079,
+      "yield_t_ha_std": 0.6159,
+      "yield_t_ha_min": 0.0,
+      "yield_t_ha_max": 2.8333,
+      "is_model_ready_for_phase_4": true
+    },
+    "cotton": {
+      "crop_name": "Cotton",
+      "category": "cash_crop",
+      "default_season": "Kharif",
+      "total_yield_observations": 724,
+      "weather_aligned_observations": 616,
+      "fully_aligned_observations": 196,
+      "districts_count": 26,
+      "fully_aligned_districts_count": 7,
+      "years_min": 1990,
+      "years_max": 2017,
+      "yield_t_ha_mean": 0.1833,
+      "yield_t_ha_std": 0.1435,
+      "yield_t_ha_min": 0.0,
+      "yield_t_ha_max": 1.0,
+      "is_model_ready_for_phase_4": true
+    },
+    "maize": {
+      "crop_name": "Maize (Corn)",
+      "category": "cereal",
+      "default_season": "Kharif",
+      "total_yield_observations": 724,
+      "weather_aligned_observations": 616,
+      "fully_aligned_observations": 196,
+      "districts_count": 26,
+      "fully_aligned_districts_count": 7,
+      "years_min": 1990,
+      "years_max": 2017,
+      "yield_t_ha_mean": 1.5547,
+      "yield_t_ha_std": 0.9106,
+      "yield_t_ha_min": 0.0,
+      "yield_t_ha_max": 6.0423,
+      "is_model_ready_for_phase_4": true
+    },
+    "chickpea": {
+      "crop_name": "Chickpea (Gram)",
+      "category": "pulse",
+      "default_season": "Rabi",
+      "total_yield_observations": 724,
+      "weather_aligned_observations": 594,
+      "fully_aligned_observations": 189,
+      "districts_count": 26,
+      "fully_aligned_districts_count": 7,
+      "years_min": 1990,
+      "years_max": 2017,
+      "yield_t_ha_mean": 0.6211,
+      "yield_t_ha_std": 0.2807,
+      "yield_t_ha_min": 0.0,
+      "yield_t_ha_max": 2.1639,
+      "is_model_ready_for_phase_4": true
+    },
+    "groundnut": {
+      "crop_name": "Groundnut (Peanut)",
+      "category": "oilseed",
+      "default_season": "Kharif",
+      "total_yield_observations": 724,
+      "weather_aligned_observations": 616,
+      "fully_aligned_observations": 196,
+      "districts_count": 26,
+      "fully_aligned_districts_count": 7,
+      "years_min": 1990,
+      "years_max": 2017,
+      "yield_t_ha_mean": 1.0509,
+      "yield_t_ha_std": 0.4631,
+      "yield_t_ha_min": 0.0,
+      "yield_t_ha_max": 3.0,
+      "is_model_ready_for_phase_4": true
+    }
+  },
+  "district_coverage": {
+    "total_districts_with_yield": 26,
+    "districts_with_weather_cache": 22,
+    "districts_with_soil_cache": 7,
+    "districts_with_full_multimodal_alignment": [
+      "Ahmednagar",
+      "Akola",
+      "Amravati",
+      "Aurangabad",
+      "Beed",
+      "Bhandara",
+      "Buldhana"
+    ]
+  },
+  "missingness_rates": {
+    "yield_t_ha": 0.0,
+    "cumulative_rainfall_mm": 15.79,
+    "mean_temp_max_c": 15.79,
+    "soil_ph": 72.93,
+    "organic_carbon_pct": 72.93,
+    "clay_pct": 72.93
+  }
+}

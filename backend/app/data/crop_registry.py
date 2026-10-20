@@ -53,7 +53,7 @@ CROP_REGISTRY: Dict[str, CropSpecification] = {
         default_season="Kharif",
         supported_seasons=["Kharif"],
         source_aliases={
-            "icrisat_dld": ["SOYABEAN", "SOYBEAN"],
+            "icrisat_dld": ["SOYABEAN", "SOYBEAN", "SOYA BEAN", "SOY BEAN", "SOYA"],
             "des_dacnet": ["Soyabean", "Soybean"],
             "faostat": ["Soya beans", "Soybeans"],
         },
@@ -102,7 +102,7 @@ CROP_REGISTRY: Dict[str, CropSpecification] = {
         supported_seasons=["Kharif"],
         source_aliases={
             "icrisat_dld": ["COTTON"],
-            "des_dacnet": ["Cotton(lint)", "Cotton"],
+            "des_dacnet": ["Cotton(lint)", "Cotton", "Kapas"],
             "faostat": ["Seed cotton", "Cotton lint"],
         },
         typical_yield_range_t_ha=(0.05, 3.5),

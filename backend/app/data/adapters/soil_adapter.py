@@ -18,6 +18,7 @@ class SoilAdapter:
     def __init__(self, raw_soil_dir: str):
         self.raw_soil_dir = raw_soil_dir
         self.source_id = "isric_soilgrids_v2"
+        self._district_cache: Dict[str, Optional[SoilMeasurement]] = {}
 
     def get_soil_measurement(self, district: str) -> Optional[SoilMeasurement]:
         """Extract depth-weighted topsoil properties for a district.
@@ -28,11 +29,15 @@ class SoilAdapter:
         Returns:
             SoilMeasurement instance or None if no cached profile exists.
         """
+        if district in self._district_cache:
+            return self._district_cache[district]
+
         safe_district = district.lower().replace(" ", "_")
         pattern = os.path.join(self.raw_soil_dir, f"soilgrids_{safe_district}_*.json")
         matches = glob.glob(pattern)
 
         if not matches:
+            self._district_cache[district] = None
             return None
 
         # Load the first matching cache file
@@ -104,7 +109,7 @@ class SoilAdapter:
         else:
             norm_clay, norm_sand, norm_silt = 45.0, 20.0, 35.0
 
-        return SoilMeasurement(
+        meas = SoilMeasurement(
             soil_ph=raw_ph,
             organic_carbon_pct=raw_soc,
             clay_pct=norm_clay,
@@ -116,3 +121,5 @@ class SoilAdapter:
             source_resolution="250m",
             source="ISRIC SoilGrids 2.0 (0-30cm Weighted Mean)",
         )
+        self._district_cache[district] = meas
+        return meas
