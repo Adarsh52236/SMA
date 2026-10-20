@@ -1,0 +1,2 @@
+# Root requirements pointer for cloud deployment runtimes (Render, Railway, etc.)
+-r backend/requirements.txt
