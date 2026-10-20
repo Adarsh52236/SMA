@@ -30,7 +30,7 @@
    - `fetch_soil_data.py`: Map ISRIC SoilGrids 2.0 topsoil parameters (pH, organic carbon, clay, sand, bulk density, CEC) for Maharashtra agricultural zones.
 2. Clean and align datasets on `(state, district, crop, season, year)`.
 3. Save raw data in `data/raw/`, intermediate steps in `data/interim/`, and the final modeling dataset in `data/processed/crop_yield_maharashtra.csv`.
-4. Create an EDA notebook (`notebooks/01_data_exploration.ipynb`) auditing missing values, geographic coverage, yield distributions, and multicollinearity.
+4. Create an EDA notebook (`notebooks/crop_yield_prediction.ipynb`) auditing missing values, geographic coverage, yield distributions, and multicollinearity across crops.
 
 **Phase 2 Acceptance Criteria**:
 - Verified non-synthetic dataset containing genuine historical records from official sources.
