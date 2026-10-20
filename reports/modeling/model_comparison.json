@@ -1,0 +1,58 @@
+{
+  "Mean_Yield_Baseline": {
+    "train_metrics": {
+      "mae_t_ha": 0.0435,
+      "rmse_t_ha": 0.0491,
+      "r2_score": 0.0,
+      "sample_count": 6
+    },
+    "validation_metrics": {
+      "mae_t_ha": 0.1435,
+      "rmse_t_ha": 0.1494,
+      "r2_score": -11.8585,
+      "sample_count": 6
+    }
+  },
+  "Ridge_Regression": {
+    "train_metrics": {
+      "mae_t_ha": 0.0139,
+      "rmse_t_ha": 0.0151,
+      "r2_score": 0.9052,
+      "sample_count": 6
+    },
+    "validation_metrics": {
+      "mae_t_ha": 0.0452,
+      "rmse_t_ha": 0.0471,
+      "r2_score": -0.2781,
+      "sample_count": 6
+    }
+  },
+  "Random_Forest": {
+    "train_metrics": {
+      "mae_t_ha": 0.0247,
+      "rmse_t_ha": 0.0282,
+      "r2_score": 0.6716,
+      "sample_count": 6
+    },
+    "validation_metrics": {
+      "mae_t_ha": 0.1208,
+      "rmse_t_ha": 0.1268,
+      "r2_score": -8.2505,
+      "sample_count": 6
+    }
+  },
+  "Gradient_Boosting": {
+    "train_metrics": {
+      "mae_t_ha": 0.0026,
+      "rmse_t_ha": 0.0033,
+      "r2_score": 0.9956,
+      "sample_count": 6
+    },
+    "validation_metrics": {
+      "mae_t_ha": 0.1057,
+      "rmse_t_ha": 0.1106,
+      "r2_score": -6.0401,
+      "sample_count": 6
+    }
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "model_name": "Random_Forest",
+  "target": "yield_t_ha",
+  "target_units": "tonnes per hectare (t/ha)",
+  "dataset_sha256": "656a3a8999c8feb73d30aae7b6a7fb72c5112a933107fdbe3338bdc17861bf9a",
+  "feature_schema": {
+    "all_predictors": [
+      "cumulative_rainfall_mm",
+      "mean_temp_max_c",
+      "mean_temp_min_c",
+      "mean_solar_radiation_mj_m2",
+      "mean_relative_humidity_pct",
+      "consecutive_dry_days_max",
+      "heat_stress_days",
+      "soil_ph",
+      "organic_carbon_pct",
+      "clay_pct",
+      "sand_pct",
+      "silt_pct",
+      "bulk_density_g_cm3",
+      "cation_exchange_capacity_cmol_kg",
+      "district"
+    ],
+    "numeric_features": [
+      "cumulative_rainfall_mm",
+      "mean_temp_max_c",
+      "mean_temp_min_c",
+      "mean_solar_radiation_mj_m2",
+      "mean_relative_humidity_pct",
+      "consecutive_dry_days_max",
+      "heat_stress_days",
+      "soil_ph",
+      "organic_carbon_pct",
+      "clay_pct",
+      "sand_pct",
+      "silt_pct",
+      "bulk_density_g_cm3",
+      "cation_exchange_capacity_cmol_kg"
+    ],
+    "categorical_features": [
+      "district"
+    ]
+  },
+  "splits": {
+    "train": {
+      "rows": 145,
+      "years": [
+        1990,
+        2010
+      ],
+      "districts": [
+        "Ahmednagar",
+        "Akola",
+        "Amravati",
+        "Aurangabad",
+        "Beed",
+        "Bhandara",
+        "Buldhana"
+      ]
+    },
+    "validation": {
+      "rows": 28,
+      "years": [
+        2011,
+        2014
+      ],
+      "districts": [
+        "Ahmednagar",
+        "Akola",
+        "Amravati",
+        "Aurangabad",
+        "Beed",
+        "Bhandara",
+        "Buldhana"
+      ]
+    },
+    "test": {
+      "rows": 21,
+      "years": [
+        2015,
+        2017
+      ],
+      "districts": [
+        "Ahmednagar",
+        "Akola",
+        "Amravati",
+        "Aurangabad",
+        "Beed",
+        "Bhandara",
+        "Buldhana"
+      ]
+    }
+  },
+  "performance": {
+    "validation": {
+      "mae_t_ha": 0.3869,
+      "rmse_t_ha": 0.4483,
+      "r2_score": 0.3028,
+      "sample_count": 28
+    },
+    "test": {
+      "mae_t_ha": 0.352,
+      "rmse_t_ha": 0.436,
+      "r2_score": 0.14,
+      "sample_count": 21
+    }
+  },
+  "environment": {
+    "scikit_learn_version": "1.9.0",
+    "numpy_version": "2.4.6",
+    "pandas_version": "2.3.3",
+    "joblib_version": "1.5.3"
+  }
+}
