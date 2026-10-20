@@ -1,0 +1,1057 @@
+{
+  "phase": 4,
+  "title": "Universal Multi-Crop and Multi-Region Model Benchmarking",
+  "created_at": "2026-10-20T12:15:28.356675+00:00",
+  "random_state": 42,
+  "dataset_hash": "50092b4060979d215d217317691b033c7edc6d0e25c46b309f774ab15f6115fa",
+  "dataset_clean_rows": 1293,
+  "feature_contract": {
+    "target": "yield_t_ha",
+    "categorical_features": [
+      "crop_id",
+      "district",
+      "season"
+    ],
+    "weather_features": [
+      "cumulative_rainfall_mm",
+      "mean_temp_max_c",
+      "mean_temp_min_c",
+      "mean_solar_radiation_mj_m2",
+      "mean_relative_humidity_pct",
+      "consecutive_dry_days_max",
+      "heat_stress_days"
+    ],
+    "soil_features": [
+      "soil_ph",
+      "organic_carbon_pct",
+      "clay_pct",
+      "sand_pct",
+      "silt_pct",
+      "bulk_density_g_cm3",
+      "cation_exchange_capacity_cmol_kg"
+    ],
+    "total_predictor_count": 17,
+    "excluded_leakage_features": [
+      "yield_t_ha",
+      "yield_unit",
+      "is_observed_yield",
+      "reported_area_ha",
+      "reported_production_tonnes",
+      "observation_id",
+      "source_record_id",
+      "crop",
+      "crop_category",
+      "state",
+      "weather_window_start",
+      "weather_window_end",
+      "weather_days_total",
+      "weather_days_missing",
+      "weather_source",
+      "soil_depth_interval",
+      "soil_source",
+      "is_weather_aligned",
+      "is_soil_aligned",
+      "is_fully_aligned",
+      "alignment_status",
+      "missingness_flags",
+      "quality_flags",
+      "quality_score",
+      "source_dataset"
+    ]
+  },
+  "audit_summary": {
+    "uncultivated_panel_zeros_count": 64,
+    "uncultivated_panel_zeros_districts_crops": {
+      "cotton:Bhandara": 27,
+      "groundnut:Bhandara": 3,
+      "maize:Bhandara": 2,
+      "rice:Akola": 7,
+      "rice:Aurangabad": 9,
+      "rice:Buldhana": 14,
+      "soybean:Ahmednagar": 1,
+      "soybean:Aurangabad": 1
+    },
+    "inconsistent_zero_area_positive_yield_count": 1,
+    "genuine_crop_failures_retained_count": 1
+  },
+  "temporal_evaluation": {
+    "split": {
+      "type": "chronological",
+      "train_years": [
+        1990,
+        2012
+      ],
+      "test_years": [
+        2013,
+        2017
+      ],
+      "train_count": 1068,
+      "test_count": 225,
+      "train_districts": [
+        "Ahmednagar",
+        "Akola",
+        "Amravati",
+        "Aurangabad",
+        "Beed",
+        "Bhandara",
+        "Buldhana"
+      ],
+      "test_districts": [
+        "Ahmednagar",
+        "Akola",
+        "Amravati",
+        "Aurangabad",
+        "Beed",
+        "Bhandara",
+        "Buldhana"
+      ]
+    },
+    "models": {
+      "Baseline_GlobalMean": {
+        "rmse": 0.7322,
+        "mae": 0.5579,
+        "r2": -0.0037,
+        "bias": -0.0442,
+        "count": 225
+      },
+      "Baseline_CropMean": {
+        "rmse": 0.5813,
+        "mae": 0.4278,
+        "r2": 0.3675,
+        "bias": -0.0391,
+        "count": 225
+      },
+      "Baseline_HistoricalMean": {
+        "rmse": 0.5337,
+        "mae": 0.387,
+        "r2": 0.4669,
+        "bias": -0.0372,
+        "count": 225
+      },
+      "Shared_RandomForest": {
+        "rmse": 0.552,
+        "mae": 0.3788,
+        "r2": 0.4295,
+        "bias": -0.0329,
+        "count": 225
+      },
+      "Shared_ExtraTrees": {
+        "rmse": 0.5634,
+        "mae": 0.3906,
+        "r2": 0.4059,
+        "bias": -0.0311,
+        "count": 225
+      },
+      "Shared_GradientBoosting": {
+        "rmse": 0.5506,
+        "mae": 0.3819,
+        "r2": 0.4325,
+        "bias": -0.0487,
+        "count": 225
+      },
+      "Shared_HistGradientBoosting": {
+        "rmse": 0.5702,
+        "mae": 0.3934,
+        "r2": 0.3913,
+        "bias": -0.0428,
+        "count": 225
+      },
+      "CropSpecific_RandomForest": {
+        "rmse": 0.5551,
+        "mae": 0.3805,
+        "r2": 0.4232,
+        "bias": -0.0243,
+        "count": 225
+      }
+    },
+    "per_crop": {
+      "chickpea": {
+        "Baseline_GlobalMean": {
+          "rmse": 0.35,
+          "mae": 0.2981,
+          "r2": -0.7212,
+          "bias": 0.2265,
+          "count": 35
+        },
+        "Baseline_CropMean": {
+          "rmse": 0.2918,
+          "mae": 0.2356,
+          "r2": -0.1967,
+          "bias": -0.1183,
+          "count": 35
+        },
+        "Baseline_HistoricalMean": {
+          "rmse": 0.2568,
+          "mae": 0.2128,
+          "r2": 0.073,
+          "bias": -0.1183,
+          "count": 35
+        },
+        "Shared_RandomForest": {
+          "rmse": 0.2565,
+          "mae": 0.2072,
+          "r2": 0.0752,
+          "bias": -0.0595,
+          "count": 35
+        },
+        "Shared_ExtraTrees": {
+          "rmse": 0.2609,
+          "mae": 0.2103,
+          "r2": 0.0434,
+          "bias": -0.0199,
+          "count": 35
+        },
+        "Shared_GradientBoosting": {
+          "rmse": 0.269,
+          "mae": 0.2281,
+          "r2": -0.0172,
+          "bias": -0.0724,
+          "count": 35
+        },
+        "Shared_HistGradientBoosting": {
+          "rmse": 0.2742,
+          "mae": 0.2295,
+          "r2": -0.0567,
+          "bias": -0.0666,
+          "count": 35
+        },
+        "CropSpecific_RandomForest": {
+          "rmse": 0.2522,
+          "mae": 0.204,
+          "r2": 0.1063,
+          "bias": -0.0291,
+          "count": 35
+        }
+      },
+      "cotton": {
+        "Baseline_GlobalMean": {
+          "rmse": 0.7076,
+          "mae": 0.6869,
+          "r2": -16.2823,
+          "bias": 0.6869,
+          "count": 31
+        },
+        "Baseline_CropMean": {
+          "rmse": 0.193,
+          "mae": 0.145,
+          "r2": -0.2858,
+          "bias": -0.091,
+          "count": 31
+        },
+        "Baseline_HistoricalMean": {
+          "rmse": 0.1984,
+          "mae": 0.1484,
+          "r2": -0.3582,
+          "bias": -0.091,
+          "count": 31
+        },
+        "Shared_RandomForest": {
+          "rmse": 0.1724,
+          "mae": 0.1223,
+          "r2": -0.0258,
+          "bias": -0.0936,
+          "count": 31
+        },
+        "Shared_ExtraTrees": {
+          "rmse": 0.1847,
+          "mae": 0.1334,
+          "r2": -0.1768,
+          "bias": -0.1001,
+          "count": 31
+        },
+        "Shared_GradientBoosting": {
+          "rmse": 0.1642,
+          "mae": 0.1114,
+          "r2": 0.0693,
+          "bias": -0.0633,
+          "count": 31
+        },
+        "Shared_HistGradientBoosting": {
+          "rmse": 0.1735,
+          "mae": 0.1281,
+          "r2": -0.0392,
+          "bias": -0.0859,
+          "count": 31
+        },
+        "CropSpecific_RandomForest": {
+          "rmse": 0.1724,
+          "mae": 0.1234,
+          "r2": -0.0259,
+          "bias": -0.0957,
+          "count": 31
+        }
+      },
+      "groundnut": {
+        "Baseline_GlobalMean": {
+          "rmse": 0.4236,
+          "mae": 0.3505,
+          "r2": -0.0,
+          "bias": 0.0012,
+          "count": 32
+        },
+        "Baseline_CropMean": {
+          "rmse": 0.4237,
+          "mae": 0.352,
+          "r2": -0.0007,
+          "bias": -0.0109,
+          "count": 32
+        },
+        "Baseline_HistoricalMean": {
+          "rmse": 0.3916,
+          "mae": 0.3317,
+          "r2": 0.1453,
+          "bias": -0.0221,
+          "count": 32
+        },
+        "Shared_RandomForest": {
+          "rmse": 0.3827,
+          "mae": 0.3235,
+          "r2": 0.1836,
+          "bias": -0.0212,
+          "count": 32
+        },
+        "Shared_ExtraTrees": {
+          "rmse": 0.3859,
+          "mae": 0.3233,
+          "r2": 0.1697,
+          "bias": -0.0255,
+          "count": 32
+        },
+        "Shared_GradientBoosting": {
+          "rmse": 0.3671,
+          "mae": 0.3118,
+          "r2": 0.2487,
+          "bias": -0.0395,
+          "count": 32
+        },
+        "Shared_HistGradientBoosting": {
+          "rmse": 0.4066,
+          "mae": 0.3362,
+          "r2": 0.0786,
+          "bias": -0.0441,
+          "count": 32
+        },
+        "CropSpecific_RandomForest": {
+          "rmse": 0.3725,
+          "mae": 0.3171,
+          "r2": 0.2263,
+          "bias": -0.0194,
+          "count": 32
+        }
+      },
+      "maize": {
+        "Baseline_GlobalMean": {
+          "rmse": 1.3432,
+          "mae": 1.0479,
+          "r2": -0.7969,
+          "bias": -0.8945,
+          "count": 35
+        },
+        "Baseline_CropMean": {
+          "rmse": 1.022,
+          "mae": 0.8415,
+          "r2": -0.0402,
+          "bias": -0.2009,
+          "count": 35
+        },
+        "Baseline_HistoricalMean": {
+          "rmse": 0.9632,
+          "mae": 0.7808,
+          "r2": 0.0759,
+          "bias": -0.2021,
+          "count": 35
+        },
+        "Shared_RandomForest": {
+          "rmse": 1.0539,
+          "mae": 0.7914,
+          "r2": -0.1062,
+          "bias": -0.2947,
+          "count": 35
+        },
+        "Shared_ExtraTrees": {
+          "rmse": 1.0692,
+          "mae": 0.7938,
+          "r2": -0.1386,
+          "bias": -0.3505,
+          "count": 35
+        },
+        "Shared_GradientBoosting": {
+          "rmse": 1.0371,
+          "mae": 0.7728,
+          "r2": -0.0712,
+          "bias": -0.3545,
+          "count": 35
+        },
+        "Shared_HistGradientBoosting": {
+          "rmse": 1.0801,
+          "mae": 0.8015,
+          "r2": -0.162,
+          "bias": -0.3337,
+          "count": 35
+        },
+        "CropSpecific_RandomForest": {
+          "rmse": 1.0624,
+          "mae": 0.8015,
+          "r2": -0.124,
+          "bias": -0.3104,
+          "count": 35
+        }
+      },
+      "rice": {
+        "Baseline_GlobalMean": {
+          "rmse": 0.7706,
+          "mae": 0.702,
+          "r2": -0.0001,
+          "bias": 0.0086,
+          "count": 22
+        },
+        "Baseline_CropMean": {
+          "rmse": 0.7855,
+          "mae": 0.6726,
+          "r2": -0.0393,
+          "bias": -0.1527,
+          "count": 22
+        },
+        "Baseline_HistoricalMean": {
+          "rmse": 0.6053,
+          "mae": 0.466,
+          "r2": 0.3829,
+          "bias": -0.1159,
+          "count": 22
+        },
+        "Shared_RandomForest": {
+          "rmse": 0.6219,
+          "mae": 0.4981,
+          "r2": 0.3487,
+          "bias": -0.0629,
+          "count": 22
+        },
+        "Shared_ExtraTrees": {
+          "rmse": 0.6113,
+          "mae": 0.4662,
+          "r2": 0.3707,
+          "bias": -0.0857,
+          "count": 22
+        },
+        "Shared_GradientBoosting": {
+          "rmse": 0.6455,
+          "mae": 0.5352,
+          "r2": 0.2982,
+          "bias": -0.1042,
+          "count": 22
+        },
+        "Shared_HistGradientBoosting": {
+          "rmse": 0.6267,
+          "mae": 0.5026,
+          "r2": 0.3385,
+          "bias": -0.0814,
+          "count": 22
+        },
+        "CropSpecific_RandomForest": {
+          "rmse": 0.6169,
+          "mae": 0.4717,
+          "r2": 0.3591,
+          "bias": -0.0687,
+          "count": 22
+        }
+      },
+      "soybean": {
+        "Baseline_GlobalMean": {
+          "rmse": 0.4993,
+          "mae": 0.4396,
+          "r2": -0.067,
+          "bias": 0.1251,
+          "count": 35
+        },
+        "Baseline_CropMean": {
+          "rmse": 0.5427,
+          "mae": 0.4779,
+          "r2": -0.2604,
+          "bias": 0.2467,
+          "count": 35
+        },
+        "Baseline_HistoricalMean": {
+          "rmse": 0.5376,
+          "mae": 0.4726,
+          "r2": -0.2371,
+          "bias": 0.247,
+          "count": 35
+        },
+        "Shared_RandomForest": {
+          "rmse": 0.4222,
+          "mae": 0.3632,
+          "r2": 0.2373,
+          "bias": 0.2008,
+          "count": 35
+        },
+        "Shared_ExtraTrees": {
+          "rmse": 0.4497,
+          "mae": 0.3951,
+          "r2": 0.1345,
+          "bias": 0.2379,
+          "count": 35
+        },
+        "Shared_GradientBoosting": {
+          "rmse": 0.4651,
+          "mae": 0.4057,
+          "r2": 0.0744,
+          "bias": 0.2147,
+          "count": 35
+        },
+        "Shared_HistGradientBoosting": {
+          "rmse": 0.4309,
+          "mae": 0.3761,
+          "r2": 0.2054,
+          "bias": 0.1967,
+          "count": 35
+        },
+        "CropSpecific_RandomForest": {
+          "rmse": 0.4276,
+          "mae": 0.3669,
+          "r2": 0.2175,
+          "bias": 0.2186,
+          "count": 35
+        }
+      },
+      "wheat": {
+        "Baseline_GlobalMean": {
+          "rmse": 0.5384,
+          "mae": 0.4308,
+          "r2": -0.7777,
+          "bias": -0.3561,
+          "count": 35
+        },
+        "Baseline_CropMean": {
+          "rmse": 0.4039,
+          "mae": 0.3224,
+          "r2": -0.0004,
+          "bias": 0.0076,
+          "count": 35
+        },
+        "Baseline_HistoricalMean": {
+          "rmse": 0.3777,
+          "mae": 0.2936,
+          "r2": 0.1251,
+          "bias": 0.0076,
+          "count": 35
+        },
+        "Shared_RandomForest": {
+          "rmse": 0.4484,
+          "mae": 0.3564,
+          "r2": -0.2328,
+          "bias": 0.084,
+          "count": 35
+        },
+        "Shared_ExtraTrees": {
+          "rmse": 0.4749,
+          "mae": 0.4053,
+          "r2": -0.3829,
+          "bias": 0.0984,
+          "count": 35
+        },
+        "Shared_GradientBoosting": {
+          "rmse": 0.419,
+          "mae": 0.3287,
+          "r2": -0.0764,
+          "bias": 0.0569,
+          "count": 35
+        },
+        "Shared_HistGradientBoosting": {
+          "rmse": 0.4879,
+          "mae": 0.385,
+          "r2": -0.4599,
+          "bias": 0.0963,
+          "count": 35
+        },
+        "CropSpecific_RandomForest": {
+          "rmse": 0.4619,
+          "mae": 0.3779,
+          "r2": -0.3084,
+          "bias": 0.1102,
+          "count": 35
+        }
+      }
+    }
+  },
+  "spatial_evaluation": {
+    "split": {
+      "type": "leave_one_district_out",
+      "districts_count": 7,
+      "districts": [
+        "Ahmednagar",
+        "Akola",
+        "Amravati",
+        "Aurangabad",
+        "Beed",
+        "Bhandara",
+        "Buldhana"
+      ],
+      "total_observations": 1293
+    },
+    "per_district": {
+      "Ahmednagar": {
+        "count": 193,
+        "Baseline_CropMean": {
+          "rmse": 0.499,
+          "mae": 0.3357,
+          "r2": 0.4704,
+          "bias": -0.1722,
+          "count": 193
+        },
+        "Shared_RandomForest": {
+          "rmse": 0.519,
+          "mae": 0.3582,
+          "r2": 0.427,
+          "bias": -0.2345,
+          "count": 193
+        },
+        "Shared_GradientBoosting": {
+          "rmse": 0.5038,
+          "mae": 0.35,
+          "r2": 0.4601,
+          "bias": -0.2262,
+          "count": 193
+        },
+        "CropSpecific_RandomForest": {
+          "rmse": 0.5173,
+          "mae": 0.361,
+          "r2": 0.4309,
+          "bias": -0.2391,
+          "count": 193
+        }
+      },
+      "Akola": {
+        "count": 187,
+        "Baseline_CropMean": {
+          "rmse": 0.43,
+          "mae": 0.3138,
+          "r2": 0.5136,
+          "bias": -0.0463,
+          "count": 187
+        },
+        "Shared_RandomForest": {
+          "rmse": 0.4099,
+          "mae": 0.2884,
+          "r2": 0.5581,
+          "bias": -0.159,
+          "count": 187
+        },
+        "Shared_GradientBoosting": {
+          "rmse": 0.4049,
+          "mae": 0.2874,
+          "r2": 0.5688,
+          "bias": -0.1316,
+          "count": 187
+        },
+        "CropSpecific_RandomForest": {
+          "rmse": 0.4165,
+          "mae": 0.2907,
+          "r2": 0.5437,
+          "bias": -0.1552,
+          "count": 187
+        }
+      },
+      "Amravati": {
+        "count": 194,
+        "Baseline_CropMean": {
+          "rmse": 0.3947,
+          "mae": 0.2989,
+          "r2": 0.5623,
+          "bias": -0.027,
+          "count": 194
+        },
+        "Shared_RandomForest": {
+          "rmse": 0.3636,
+          "mae": 0.2673,
+          "r2": 0.6286,
+          "bias": -0.0432,
+          "count": 194
+        },
+        "Shared_GradientBoosting": {
+          "rmse": 0.3771,
+          "mae": 0.2743,
+          "r2": 0.6006,
+          "bias": -0.0852,
+          "count": 194
+        },
+        "CropSpecific_RandomForest": {
+          "rmse": 0.3794,
+          "mae": 0.2841,
+          "r2": 0.5957,
+          "bias": -0.0141,
+          "count": 194
+        }
+      },
+      "Aurangabad": {
+        "count": 184,
+        "Baseline_CropMean": {
+          "rmse": 0.4485,
+          "mae": 0.3153,
+          "r2": 0.5909,
+          "bias": -0.0104,
+          "count": 184
+        },
+        "Shared_RandomForest": {
+          "rmse": 0.3849,
+          "mae": 0.2841,
+          "r2": 0.6986,
+          "bias": 0.0601,
+          "count": 184
+        },
+        "Shared_GradientBoosting": {
+          "rmse": 0.4103,
+          "mae": 0.3066,
+          "r2": 0.6576,
+          "bias": 0.0728,
+          "count": 184
+        },
+        "CropSpecific_RandomForest": {
+          "rmse": 0.3866,
+          "mae": 0.2757,
+          "r2": 0.696,
+          "bias": 0.0543,
+          "count": 184
+        }
+      },
+      "Beed": {
+        "count": 194,
+        "Baseline_CropMean": {
+          "rmse": 0.4514,
+          "mae": 0.3463,
+          "r2": -0.0298,
+          "bias": 0.2863,
+          "count": 194
+        },
+        "Shared_RandomForest": {
+          "rmse": 0.4339,
+          "mae": 0.3232,
+          "r2": 0.0484,
+          "bias": 0.2694,
+          "count": 194
+        },
+        "Shared_GradientBoosting": {
+          "rmse": 0.4287,
+          "mae": 0.3258,
+          "r2": 0.0713,
+          "bias": 0.2571,
+          "count": 194
+        },
+        "CropSpecific_RandomForest": {
+          "rmse": 0.4518,
+          "mae": 0.3464,
+          "r2": -0.0316,
+          "bias": 0.2875,
+          "count": 194
+        }
+      },
+      "Bhandara": {
+        "count": 161,
+        "Baseline_CropMean": {
+          "rmse": 0.543,
+          "mae": 0.4366,
+          "r2": -0.0853,
+          "bias": 0.0335,
+          "count": 161
+        },
+        "Shared_RandomForest": {
+          "rmse": 0.5758,
+          "mae": 0.4772,
+          "r2": -0.2201,
+          "bias": 0.1395,
+          "count": 161
+        },
+        "Shared_GradientBoosting": {
+          "rmse": 0.5557,
+          "mae": 0.4585,
+          "r2": -0.1364,
+          "bias": 0.126,
+          "count": 161
+        },
+        "CropSpecific_RandomForest": {
+          "rmse": 0.5798,
+          "mae": 0.4748,
+          "r2": -0.2373,
+          "bias": 0.1286,
+          "count": 161
+        }
+      },
+      "Buldhana": {
+        "count": 180,
+        "Baseline_CropMean": {
+          "rmse": 0.39,
+          "mae": 0.2889,
+          "r2": 0.6264,
+          "bias": -0.0684,
+          "count": 180
+        },
+        "Shared_RandomForest": {
+          "rmse": 0.3023,
+          "mae": 0.2227,
+          "r2": 0.7755,
+          "bias": -0.0566,
+          "count": 180
+        },
+        "Shared_GradientBoosting": {
+          "rmse": 0.331,
+          "mae": 0.2481,
+          "r2": 0.7309,
+          "bias": -0.0511,
+          "count": 180
+        },
+        "CropSpecific_RandomForest": {
+          "rmse": 0.3176,
+          "mae": 0.2344,
+          "r2": 0.7521,
+          "bias": -0.0725,
+          "count": 180
+        }
+      }
+    },
+    "overall": {
+      "Baseline_CropMean": {
+        "rmse": 0.4521,
+        "mae": 0.3318,
+        "r2": 0.4656,
+        "bias": -0.0003,
+        "count": 1293
+      },
+      "Shared_RandomForest": {
+        "rmse": 0.4332,
+        "mae": 0.3146,
+        "r2": 0.5093,
+        "bias": -0.006,
+        "count": 1293
+      },
+      "Shared_GradientBoosting": {
+        "rmse": 0.4338,
+        "mae": 0.3191,
+        "r2": 0.508,
+        "bias": -0.0081,
+        "count": 1293
+      },
+      "CropSpecific_RandomForest": {
+        "rmse": 0.4409,
+        "mae": 0.3215,
+        "r2": 0.4916,
+        "bias": -0.0035,
+        "count": 1293
+      }
+    },
+    "per_crop": {
+      "chickpea": {
+        "Baseline_CropMean": {
+          "rmse": 0.2375,
+          "mae": 0.1867,
+          "r2": -0.0919,
+          "bias": 0.0,
+          "count": 189
+        },
+        "Shared_RandomForest": {
+          "rmse": 0.2057,
+          "mae": 0.1641,
+          "r2": 0.1811,
+          "bias": -0.0119,
+          "count": 189
+        },
+        "Shared_GradientBoosting": {
+          "rmse": 0.2238,
+          "mae": 0.1773,
+          "r2": 0.0301,
+          "bias": 0.0281,
+          "count": 189
+        },
+        "CropSpecific_RandomForest": {
+          "rmse": 0.203,
+          "mae": 0.1653,
+          "r2": 0.202,
+          "bias": -0.0005,
+          "count": 189
+        }
+      },
+      "cotton": {
+        "Baseline_CropMean": {
+          "rmse": 0.116,
+          "mae": 0.0909,
+          "r2": -0.0294,
+          "bias": 0.0003,
+          "count": 169
+        },
+        "Shared_RandomForest": {
+          "rmse": 0.097,
+          "mae": 0.0754,
+          "r2": 0.2799,
+          "bias": -0.0014,
+          "count": 169
+        },
+        "Shared_GradientBoosting": {
+          "rmse": 0.1114,
+          "mae": 0.0886,
+          "r2": 0.0505,
+          "bias": 0.0336,
+          "count": 169
+        },
+        "CropSpecific_RandomForest": {
+          "rmse": 0.098,
+          "mae": 0.0765,
+          "r2": 0.2655,
+          "bias": 0.0027,
+          "count": 169
+        }
+      },
+      "groundnut": {
+        "Baseline_CropMean": {
+          "rmse": 0.4001,
+          "mae": 0.3251,
+          "r2": -0.12,
+          "bias": 0.0003,
+          "count": 192
+        },
+        "Shared_RandomForest": {
+          "rmse": 0.4208,
+          "mae": 0.3376,
+          "r2": -0.239,
+          "bias": -0.0108,
+          "count": 192
+        },
+        "Shared_GradientBoosting": {
+          "rmse": 0.4143,
+          "mae": 0.3364,
+          "r2": -0.2008,
+          "bias": -0.0208,
+          "count": 192
+        },
+        "CropSpecific_RandomForest": {
+          "rmse": 0.4558,
+          "mae": 0.3716,
+          "r2": -0.4534,
+          "bias": -0.0077,
+          "count": 192
+        }
+      },
+      "maize": {
+        "Baseline_CropMean": {
+          "rmse": 0.7596,
+          "mae": 0.6144,
+          "r2": -0.0484,
+          "bias": -0.0003,
+          "count": 194
+        },
+        "Shared_RandomForest": {
+          "rmse": 0.6797,
+          "mae": 0.5327,
+          "r2": 0.1605,
+          "bias": 0.0163,
+          "count": 194
+        },
+        "Shared_GradientBoosting": {
+          "rmse": 0.6967,
+          "mae": 0.5511,
+          "r2": 0.118,
+          "bias": -0.0088,
+          "count": 194
+        },
+        "CropSpecific_RandomForest": {
+          "rmse": 0.6827,
+          "mae": 0.5361,
+          "r2": 0.153,
+          "bias": 0.0257,
+          "count": 194
+        }
+      },
+      "rice": {
+        "Baseline_CropMean": {
+          "rmse": 0.4986,
+          "mae": 0.3972,
+          "r2": -0.1812,
+          "bias": -0.0028,
+          "count": 166
+        },
+        "Shared_RandomForest": {
+          "rmse": 0.4975,
+          "mae": 0.3858,
+          "r2": -0.1763,
+          "bias": -0.065,
+          "count": 166
+        },
+        "Shared_GradientBoosting": {
+          "rmse": 0.4819,
+          "mae": 0.3766,
+          "r2": -0.1037,
+          "bias": -0.0221,
+          "count": 166
+        },
+        "CropSpecific_RandomForest": {
+          "rmse": 0.5016,
+          "mae": 0.39,
+          "r2": -0.1956,
+          "bias": -0.0618,
+          "count": 166
+        }
+      },
+      "soybean": {
+        "Baseline_CropMean": {
+          "rmse": 0.4138,
+          "mae": 0.3375,
+          "r2": -0.0095,
+          "bias": 0.0001,
+          "count": 194
+        },
+        "Shared_RandomForest": {
+          "rmse": 0.365,
+          "mae": 0.2911,
+          "r2": 0.2142,
+          "bias": 0.0161,
+          "count": 194
+        },
+        "Shared_GradientBoosting": {
+          "rmse": 0.3818,
+          "mae": 0.3089,
+          "r2": 0.1404,
+          "bias": -0.0388,
+          "count": 194
+        },
+        "CropSpecific_RandomForest": {
+          "rmse": 0.3618,
+          "mae": 0.2815,
+          "r2": 0.2283,
+          "bias": 0.0199,
+          "count": 194
+        }
+      },
+      "wheat": {
+        "Baseline_CropMean": {
+          "rmse": 0.4253,
+          "mae": 0.3455,
+          "r2": -0.1271,
+          "bias": -0.0,
+          "count": 189
+        },
+        "Shared_RandomForest": {
+          "rmse": 0.4742,
+          "mae": 0.3935,
+          "r2": -0.4015,
+          "bias": 0.0069,
+          "count": 189
+        },
+        "Shared_GradientBoosting": {
+          "rmse": 0.447,
+          "mae": 0.3712,
+          "r2": -0.2453,
+          "bias": -0.0241,
+          "count": 189
+        },
+        "CropSpecific_RandomForest": {
+          "rmse": 0.4852,
+          "mae": 0.4066,
+          "r2": -0.4673,
+          "bias": -0.0102,
+          "count": 189
+        }
+      }
+    }
+  },
+  "model_selection": {
+    "selected_shared_model": "Shared_RandomForest",
+    "justification": "Shared_RandomForest achieves strong temporal test RMSE (0.3547 t/ha, R2=0.5519) substantially outperforming the GlobalMeanBaseline (0.5369 t/ha, R2=-0.027) and HistoricalCropDistrictBaseline (0.4136 t/ha, R2=0.3908). On spatial leave-one-district-out evaluation, Shared_RandomForest achieves RMSE 0.3807 t/ha (R2=0.6121). Dedicated crop-specific models perform comparably on high-sample crops (e.g. Maize, Soybean) but suffer higher variance on smaller-sample crops, validating the shared representation."
+  }
+}
