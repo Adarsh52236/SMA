@@ -18,8 +18,8 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     ENVIRONMENT: str = "development"
 
-    # CORS origins: support comma-separated or JSON list via CORS_ORIGINS or BACKEND_CORS_ORIGINS
-    BACKEND_CORS_ORIGINS: List[str] = [
+    # CORS origins: support comma-separated string or JSON array
+    BACKEND_CORS_ORIGINS: Union[str, List[str]] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "https://sma-production.up.railway.app",
@@ -27,11 +27,19 @@ class Settings(BaseSettings):
         "https://sma.vercel.app",
     ]
 
-    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
+    @field_validator("BACKEND_CORS_ORIGINS")
     @classmethod
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
-        if isinstance(v, str) and not v.startswith("["):
-            return [i.strip().rstrip("/") for i in v.split(",") if i.strip()]
+        if isinstance(v, str):
+            v_str = v.strip()
+            if v_str.startswith("["):
+                try:
+                    import json
+                    parsed = json.loads(v_str)
+                    return [i.strip().rstrip("/") for i in parsed if isinstance(i, str) and i.strip()]
+                except Exception:
+                    pass
+            return [i.strip().rstrip("/") for i in v_str.split(",") if i.strip()]
         elif isinstance(v, list):
             return [i.strip().rstrip("/") if isinstance(i, str) else i for i in v]
         return []
