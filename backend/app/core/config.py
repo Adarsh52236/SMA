@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import List, Union
+from typing import List, Union, Optional
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -78,6 +78,25 @@ class Settings(BaseSettings):
         "Bhandara",
         "Buldhana",
     ]
+
+    # Keep-Alive / Self-Triggering background worker settings
+    KEEP_ALIVE_ENABLED: bool = True
+    KEEP_ALIVE_INTERVAL_MINUTES: int = 10
+    KEEP_ALIVE_URL: Optional[str] = None
+    KEEP_ALIVE_ENDPOINT: str = "/api/v1/health"
+    KEEP_ALIVE_TIMEOUT_SECONDS: float = 15.0
+    RENDER_EXTERNAL_URL: Optional[str] = None
+
+    def get_keep_alive_url(self) -> str:
+        """Resolve the target URL for keep-alive self-triggering."""
+        if self.KEEP_ALIVE_URL and self.KEEP_ALIVE_URL.strip():
+            return self.KEEP_ALIVE_URL.strip()
+        if self.RENDER_EXTERNAL_URL and self.RENDER_EXTERNAL_URL.strip():
+            base = self.RENDER_EXTERNAL_URL.strip().rstrip("/")
+            return f"{base}{self.KEEP_ALIVE_ENDPOINT}"
+        if self.ENVIRONMENT.lower() == "production":
+            return f"https://sma-crop-yield-api.onrender.com{self.KEEP_ALIVE_ENDPOINT}"
+        return f"http://127.0.0.1:8000{self.KEEP_ALIVE_ENDPOINT}"
 
     model_config = SettingsConfigDict(
         env_file=".env",

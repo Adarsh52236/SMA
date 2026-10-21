@@ -3,13 +3,14 @@ from fastapi import APIRouter, Response, status
 from app.core.config import settings
 from app.schemas.health import HealthResponse
 from app.services.model_service import model_service
+from app.services.keep_alive import keep_alive_service
 
 router = APIRouter()
 
 
 @router.get("/health", response_model=HealthResponse, tags=["Health"])
 def get_health() -> HealthResponse:
-    """Liveness check returning service operational status and model readiness."""
+    """Liveness check returning service operational status, model readiness, and keep-alive metrics."""
     return HealthResponse(
         status="healthy",
         version=settings.VERSION,
@@ -17,6 +18,7 @@ def get_health() -> HealthResponse:
         environment=settings.ENVIRONMENT,
         model_loaded=model_service.is_loaded,
         message="Crop Yield Prediction API operational",
+        keep_alive=keep_alive_service.get_status(),
     )
 
 

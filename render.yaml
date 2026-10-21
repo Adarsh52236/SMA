@@ -20,3 +20,9 @@ services:
         value: model_metadata.json
       - key: BACKEND_CORS_ORIGINS
         value: https://sma-frontend.vercel.app,http://localhost:3000,http://127.0.0.1:3000
+      - key: KEEP_ALIVE_ENABLED
+        value: "true"
+      - key: KEEP_ALIVE_INTERVAL_MINUTES
+        value: "10"
+      - key: KEEP_ALIVE_URL
+        value: https://sma-crop-yield-api.onrender.com/api/v1/health

@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.v1.router import api_router
 from app.services.model_service import model_service
+from app.services.keep_alive import keep_alive_service
 
 logger = logging.getLogger("CropYieldAPI")
 
@@ -17,10 +18,19 @@ async def lifespan(app: FastAPI):
 
     Loads the verified scikit-learn pipeline and metadata once on startup,
     caching it in memory to minimize prediction latency.
+    Starts the autonomous self-triggering keep-alive background worker.
     """
     logger.info("Starting Crop Yield Prediction API. Initializing model service...")
     model_service.load_model()
+
+    if settings.KEEP_ALIVE_ENABLED:
+        logger.info("Starting autonomous KeepAlive self-triggering worker...")
+        keep_alive_service.start()
+
     yield
+
+    logger.info("Stopping KeepAlive worker...")
+    await keep_alive_service.stop()
     logger.info("Shutting down Crop Yield Prediction API.")
 
 
@@ -72,6 +82,7 @@ def root():
         "docs": "/docs",
         "health": f"{settings.API_V1_STR}/health",
         "ready": f"{settings.API_V1_STR}/ready",
+        "keep_alive": f"{settings.API_V1_STR}/keep-alive",
         "metadata": f"{settings.API_V1_STR}/model/metadata",
         "predict": f"{settings.API_V1_STR}/predict",
     }

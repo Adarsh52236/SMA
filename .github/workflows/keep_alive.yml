@@ -1,0 +1,26 @@
+name: Backend Keep-Alive Watchdog
+
+on:
+  schedule:
+    # Trigger every 14 minutes to prevent Render free-tier inactive spin-down
+    - cron: '*/14 * * * *'
+  workflow_dispatch:
+    # Allows manual trigger from GitHub UI if ever needed
+
+jobs:
+  ping-backend:
+    name: Ping Backend API
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Send Keep-Alive HTTP Probe
+        run: |
+          echo "Dispatching keep-alive probe to Render backend..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 45 https://sma-crop-yield-api.onrender.com/api/v1/health || true)
+          echo "Response HTTP Status: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 400 ]; then
+            echo "Render backend is warm and healthy (HTTP $HTTP_STATUS)."
+          else
+            echo "Backend probe returned status $HTTP_STATUS (or timed out waking up)."
+          fi
